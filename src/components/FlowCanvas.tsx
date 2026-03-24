@@ -20,9 +20,10 @@ interface Props {
   nodes: Node<StepNodeData>[];
   edges: Edge[];
   onNodeClick?: (nodeId: string) => void;
+  onNodeHover?: (nodeId: string | null) => void;
 }
 
-export function FlowCanvas({ nodes, edges, onNodeClick }: Props) {
+export function FlowCanvas({ nodes, edges, onNodeClick, onNodeHover }: Props) {
   return (
     <div style={{ width: '100%', height: '100%' }}>
       <ReactFlow
@@ -31,6 +32,8 @@ export function FlowCanvas({ nodes, edges, onNodeClick }: Props) {
         nodeTypes={nodeTypes}
         edgeTypes={edgeTypes}
         onNodeClick={(_event, node) => onNodeClick?.(node.id)}
+        onNodeMouseEnter={(_event, node) => onNodeHover?.(node.id)}
+        onNodeMouseLeave={() => onNodeHover?.(null)}
         nodesDraggable={false}
         nodesConnectable={false}
         connectOnClick={false}

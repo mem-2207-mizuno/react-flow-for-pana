@@ -7,7 +7,7 @@ import { FlowCanvas } from '@/components/FlowCanvas';
 import { FlowHeader } from '@/components/controls/FlowHeader';
 import { PreconditionSelector } from '@/components/controls/PreconditionSelector';
 import { DetailPanel } from '@/components/panels/DetailPanel';
-import exampleFlowYaml from '@/data/example-flow.yaml?raw';
+import exampleFlowYaml from '@/data/product-sku-pre-launch.yaml?raw';
 import './App.css';
 
 const flowDef = loadFlowDefinition(exampleFlowYaml);
@@ -24,6 +24,7 @@ export default function App() {
   });
 
   const [selectedNodeId, setSelectedNodeId] = useState<string | null>(null);
+  const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
 
   const resolved = useMemo(
     () => resolveFlow(
@@ -44,6 +45,33 @@ export default function App() {
     [resolved.steps, selectedNodeId],
   );
 
+  // Compute which node to highlight edges for (click takes priority over hover)
+  const activeNodeId = selectedNodeId ?? hoveredNodeId;
+
+  // Compute highlighted edge IDs based on active node
+  const highlightedEdgeIds = useMemo(() => {
+    if (!activeNodeId) return null;
+    return new Set(
+      edges
+        .filter((e) => e.source === activeNodeId || e.target === activeNodeId)
+        .map((e) => e.id),
+    );
+  }, [edges, activeNodeId]);
+
+  // Inject highlight/dim state into edges
+  const edgesWithHighlight = useMemo(() => {
+    if (!highlightedEdgeIds) return edges;
+    return edges.map((e) => ({
+      ...e,
+      zIndex: highlightedEdgeIds.has(e.id) ? 1000 : -1,
+      data: {
+        ...e.data,
+        highlighted: highlightedEdgeIds.has(e.id),
+        dimmed: !highlightedEdgeIds.has(e.id),
+      },
+    }));
+  }, [edges, highlightedEdgeIds]);
+
   const handleConditionChange = useCallback((key: string, value: string) => {
     setSelectedConditions((prev) => ({ ...prev, [key]: value }));
     setSelectedNodeId(null);
@@ -51,6 +79,10 @@ export default function App() {
 
   const handleNodeClick = useCallback((nodeId: string) => {
     setSelectedNodeId((prev) => (prev === nodeId ? null : nodeId));
+  }, []);
+
+  const handleNodeHover = useCallback((nodeId: string | null) => {
+    setHoveredNodeId(nodeId);
   }, []);
 
   const handleClosePanel = useCallback(() => {
@@ -72,8 +104,9 @@ export default function App() {
           <div className="app__canvas">
             <FlowCanvas
               nodes={nodes}
-              edges={edges}
+              edges={edgesWithHighlight}
               onNodeClick={handleNodeClick}
+              onNodeHover={handleNodeHover}
             />
           </div>
           {selectedStep && (

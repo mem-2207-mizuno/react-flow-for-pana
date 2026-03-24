@@ -1,7 +1,7 @@
 import {
   BaseEdge,
   EdgeLabelRenderer,
-  getSmoothStepPath,
+  getBezierPath,
   type EdgeProps,
 } from '@xyflow/react';
 import './DataFlowEdge.css';
@@ -10,6 +10,10 @@ interface DataFlowEdgeData extends Record<string, unknown> {
   label?: string;
   dataType?: string;
   color?: string;
+  siblingIndex?: number;
+  siblingCount?: number;
+  highlighted?: boolean;
+  dimmed?: boolean;
 }
 
 type Props = EdgeProps & { data?: DataFlowEdgeData };
@@ -26,17 +30,31 @@ export function DataFlowEdge({
   data,
   markerEnd,
 }: Props) {
-  const [edgePath, labelX, labelY] = getSmoothStepPath({
+  const siblingIndex = data?.siblingIndex ?? 0;
+  const siblingCount = data?.siblingCount ?? 1;
+  const highlighted = data?.highlighted ?? false;
+  const dimmed = data?.dimmed ?? false;
+
+  // Vary curvature for sibling edges so they visually separate
+  const curvature =
+    siblingCount > 1
+      ? 0.15 + (siblingIndex / (siblingCount - 1)) * 0.4
+      : 0.25;
+
+  const [edgePath, labelX, labelY] = getBezierPath({
     sourceX,
     sourceY,
     targetX,
     targetY,
     sourcePosition,
     targetPosition,
-    borderRadius: 8,
+    curvature,
   });
 
   const color = data?.color ?? '#94a3b8';
+
+  const computedOpacity = highlighted ? 1.0 : dimmed ? 0.08 : 0.5;
+  const computedStrokeWidth = highlighted ? 3 : 2;
 
   return (
     <>
@@ -47,14 +65,14 @@ export function DataFlowEdge({
         style={{
           ...style,
           stroke: color,
-          strokeWidth: 2,
-          opacity: 0.6,
+          strokeWidth: computedStrokeWidth,
+          opacity: computedOpacity,
         }}
       />
       {data?.label && (
         <EdgeLabelRenderer>
           <div
-            className="data-flow-edge__label"
+            className={`data-flow-edge__label ${highlighted ? 'data-flow-edge__label--visible' : ''}`}
             style={{
               transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
               color,

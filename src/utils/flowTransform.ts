@@ -33,7 +33,7 @@ function connectionsToEdges(
 ): Edge[] {
   const stepMap = new Map(steps.map((s) => [s.id, s]));
 
-  return connections.map((conn) => {
+  const edges = connections.map((conn) => {
     const sourceStep = stepMap.get(conn.sourceNodeId);
     const sourcePort = sourceStep?.outputs.find(
       (p) => p.id === conn.sourcePortId,
@@ -51,10 +51,28 @@ function connectionsToEdges(
         label: conn.label ?? sourcePort?.label,
         dataType: sourcePort?.dataType,
         color,
+        siblingIndex: 0,
+        siblingCount: 1,
       },
       style: { stroke: color, strokeWidth: 2 },
     };
   });
+
+  // Group edges by source handle to assign sibling indices for path separation
+  const groups = new Map<string, typeof edges>();
+  for (const edge of edges) {
+    const key = `${edge.source}::${edge.sourceHandle}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(edge);
+  }
+  for (const group of groups.values()) {
+    for (let i = 0; i < group.length; i++) {
+      group[i].data.siblingIndex = i;
+      group[i].data.siblingCount = group.length;
+    }
+  }
+
+  return edges;
 }
 
 /** Transform flow data to React Flow nodes and edges */

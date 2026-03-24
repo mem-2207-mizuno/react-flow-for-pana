@@ -1,0 +1,930 @@
+meta:
+  id: product-sku-pre-launch
+  title: 製品軸（品番別）ローンチ前フロー
+  description: |
+    顧客理解（Why/What/Who）を起点に、コンセプト・コピー・セールストーク・接客ストーリーなど
+    各種マーケティングアウトプットを生成するフロー。
+    インプットは前モデル＋競合情報。
+  version: "1.0"
+
+preconditions: []
+
+steps:
+  # ─── インプットデータ ───
+  - id: config-params
+    name: 品番・競合設定
+    category: input
+    summary: 分析対象の自社品番と競合品番を設定
+    description: |
+      分析の起点となるパラメータ。自社製品の品番と、比較対象となる競合製品の品番を指定する。
+    inputs: []
+    outputs:
+      - id: own-product
+        label: 自社品番
+        dataType: string
+        description: 分析対象の自社製品品番
+      - id: competitor-products
+        label: 競合品番
+        dataType: string
+        description: 比較対象の競合製品品番（複数）
+
+  - id: input-data
+    name: インプットデータ群
+    category: input
+    summary: 前モデル＋競合の各種データソース
+    description: |
+      プロジェクトナレッジとして事前に格納された各種データソース群。
+      これらがLLM分析ステップのコンテキスト情報として利用される。
+    inputs: []
+    outputs:
+      - id: store-report
+        label: 店頭接点レポート
+        dataType: json
+        description: 店頭での顧客接点に関するレポート（PDF/構造化データ）
+      - id: reviews
+        label: レビューデータ
+        dataType: json
+        description: Amazon・楽天等のレビューデータ（CSV/非構造化データ）
+      - id: msc-report
+        label: MSCレポート
+        dataType: json
+        description: 購入理由・満足度に関する調査レポート（PDF/構造化データ）
+      - id: web-site
+        label: 製品Webサイト
+        dataType: json
+        description: 現行の製品Webサイト情報（PDF+HTML/非構造化データ）
+      - id: brand-survey
+        label: 定点ブランド調査
+        dataType: json
+        description: ブランド認知・イメージに関する定点調査（PDF/構造化データ）
+      - id: voc
+        label: お客様相談センター VoC
+        dataType: json
+        description: お客様相談センターに寄せられた声（CSV/非構造化データ）
+      - id: purchase-survey
+        label: 購入者アンケート
+        dataType: json
+        description: 購入者へのアンケート結果（構造化データ）
+
+  # ─── Why分析 ───
+  - id: why-analysis
+    name: Why分析
+    category: llm
+    summary: 顧客のJob・ペインポイント・購買トリガーを分析
+    description: |
+      顧客の根本的なニーズと動機を包括的に分析する。
+      顧客のJob（機能的・感情的・社会的）、ペインポイント、購入動機・Why、
+      購入トリガー（Life Change / Crisis / Inspiration）を抽出する。
+    inputs:
+      - id: own-product
+        label: 自社品番
+        dataType: string
+        description: 分析対象の自社製品品番
+        required: true
+      - id: competitor-products
+        label: 競合品番
+        dataType: string
+        description: 比較対象の競合製品品番
+        required: true
+      - id: context-data
+        label: コンテキストデータ
+        dataType: json
+        description: プロジェクトナレッジ（前モデル＋競合の各種データ）
+        required: true
+    outputs:
+      - id: why-result
+        label: Why分析結果
+        dataType: json
+        description: "Job分析・ペインポイント・購入動機・トリガー分析の結果"
+      - id: triggers
+        label: 購買トリガー
+        dataType: json
+        description: "抽出された購買トリガー一覧（Life Change / Crisis / Inspiration）"
+    prompt:
+      template: |
+        【あなたの役割】
+        あなたはマーケティング戦略とユーザーインサイト分析の専門家です。顧客の根本的なニーズと動機を包括的に分析してください。
+
+        【分析対象】
+        #自社製品
+        {{own_product}}
+
+        #競合製品
+        {{competitor_products}}
+
+        【タスク内容】
+        以下の項目を詳細に分析してください：
+        1. **顧客のJob（進歩）分析**
+           - 機能的Job：顧客がある状況で「やりたいこと」「達成したいこと」としてのタスク
+           - 感情的Job：顧客が「自分自身がどう感じたいか」という内面的な欲求
+           - 社会的Job：顧客が「他者からどう見られたいか」という社会的欲求
+        2. **ペインポイント**
+           - 顧客がジョブを完了させる上で直面している障害・不満・不便・リスク
+        3. **購入動機とWhy（顧客ニーズ）**
+        4. **購入トリガー分析**
+           - Life Change（ライフ変化）トリガー
+           - Crisis（危機・問題発生）トリガー
+           - Inspiration（刺激・発見）トリガー
+
+        【出力条件】
+        - 各項目の因果関係を明確に示してください
+        - デモグラフィック属性ではなく、行動特性・価値観に基づいて分析
+        - 機能的Job、感情的Job、社会的Jobについてそれぞれ10個ずつ出力
+      variables:
+        - name: own_product
+          source: config-params.own-product
+          description: 自社製品品番
+        - name: competitor_products
+          source: config-params.competitor-products
+          description: 競合製品品番
+    metadata:
+      output_name: why_品番別_ローンチ前
+      scenes: "4P企画, Webサイト制作, SNS/広告TD/コピー, セールストーク"
+
+  # ─── What分析 ───
+  - id: what-analysis
+    name: What分析
+    category: llm
+    summary: 製品のUSP・差別化要素・ベネフィットを分析
+    description: |
+      Why分析で抽出したトリガーに対して、自社製品の差別化要素を顧客データに基づいて分析する。
+      顧客重視軸の抽出、What(製品)分析、メーカー視点と顧客視点のギャップ分析、
+      競合分析、ベネフィット分析、USP定義を行う。
+    inputs:
+      - id: own-product
+        label: 自社品番
+        dataType: string
+        description: 分析対象の自社製品品番
+        required: true
+      - id: competitor-products
+        label: 競合品番
+        dataType: string
+        description: 比較対象の競合製品品番
+        required: true
+      - id: trigger
+        label: 分析対象トリガー
+        dataType: string
+        description: Why分析で特定されたトリガー（=Whyとして分析の軸になる）
+        required: true
+      - id: context-data
+        label: コンテキストデータ
+        dataType: json
+        description: プロジェクトナレッジ（前モデル＋競合の各種データ）
+        required: true
+    outputs:
+      - id: what-result
+        label: What分析結果
+        dataType: json
+        description: "USP・差別化・ベネフィット・競合分析の結果"
+      - id: usp
+        label: USP
+        dataType: string
+        description: "分析対象トリガーに対するコアUSP"
+    prompt:
+      template: |
+        【あなたの役割】
+        あなたは製品マーケティングの専門家であり、マーケティングコンサルタントです。
+        自社製品の差別化要素を顧客データに基づいて包括的に分析し、戦略フレームワークを構築してください。
+
+        【分析対象】
+        #自社製品
+        {{own_product}}
+        #競合製品
+        {{competitor_products}}
+
+        【分析対象トリガー】
+        #トリガー
+        {{trigger}}
+
+        【タスク内容】
+        ## 顧客重視軸の抽出（データソース別分析）
+        ## What(製品・サービス)分析
+        ## メーカー視点と顧客視点での評価ギャップ
+        ## 競合分析の実施
+        ## ベネフィット(機能的/感情的/社会的)
+        ## ベネフィット競合の発見と分析
+        ## 主要な差別化要素
+        ## USP定義
+      variables:
+        - name: own_product
+          source: config-params.own-product
+          description: 自社製品品番
+        - name: competitor_products
+          source: config-params.competitor-products
+          description: 競合製品品番
+        - name: trigger
+          source: why-analysis.triggers
+          description: Why分析で特定された購買トリガー
+    metadata:
+      output_name: what_品番別_ローンチ前
+      scenes: "4P企画, SNS/広告TD/コピー, セールストーク"
+
+  # ─── Who分析 ───
+  - id: who-analysis
+    name: Who分析
+    category: llm
+    summary: ターゲット顧客像・利用シーン・製品導入後の変化を分析
+    description: |
+      Why/What分析の結果を踏まえ、ターゲット顧客像を分析する。
+      顧客特性（心理的・行動的）、利用シーンと状況設定、
+      製品導入による生活変化・感情変化を抽出する。
+    inputs:
+      - id: own-product
+        label: 自社品番
+        dataType: string
+        description: 分析対象の自社製品品番
+        required: true
+      - id: competitor-products
+        label: 競合品番
+        dataType: string
+        description: 比較対象の競合製品品番
+        required: true
+      - id: trigger
+        label: 分析対象トリガー
+        dataType: string
+        description: Why分析で特定されたトリガー
+        required: true
+      - id: why-result
+        label: Why分析結果
+        dataType: json
+        description: Why分析の結果（Job/ペインポイント/トリガー）
+        required: true
+      - id: what-result
+        label: What分析結果
+        dataType: json
+        description: What分析の結果（USP/差別化/ベネフィット）
+        required: true
+    outputs:
+      - id: who-result
+        label: Who分析結果
+        dataType: json
+        description: "顧客像・利用シーン・製品導入後変化の分析結果"
+    prompt:
+      template: |
+        【あなたの役割】
+        あなたはマーケティング戦略の専門家です。顧客像と製品利用状況を包括的に分析してください。
+
+        【分析対象】
+        #自社製品
+        {{own_product}}
+        #競合製品
+        {{competitor_products}}
+
+        【分析対象トリガー】
+        #トリガー
+        {{trigger}}
+
+        【タスク内容】
+        1. **Who（顧客像）分析**
+           - 顧客特性：心理的特性（価値観、ライフスタイル）、行動特性（購買パターン、ブランド忠誠度）
+        2. **利用シーンと状況設定**
+           - シーン名、状況設定、ユーザーの目標、ペインポイント、感情的効果
+        3. **製品導入による変化**
+           - 生活変化：具体的な行動・習慣の変化
+           - 感情変化：購入直後〜継続使用による心理状態の変化
+      variables:
+        - name: own_product
+          source: config-params.own-product
+          description: 自社製品品番
+        - name: competitor_products
+          source: config-params.competitor-products
+          description: 競合製品品番
+        - name: trigger
+          source: why-analysis.triggers
+          description: 分析対象トリガー
+    metadata:
+      output_name: who_品番別_ローンチ前
+      scenes: "4P企画, SNS/広告TD/コピー, セールストーク"
+
+  # ─── コンセプト生成 ───
+  - id: concept-gen
+    name: コンセプト生成
+    category: llm
+    summary: トリガー×USPからプロモーションコンセプトを生成
+    description: |
+      Why/What/Who分析の結果を統合し、製品USPを活かしたプロモーションコンセプトを生成する。
+      核となる価値提案、感情的ベネフィット、差別化ポイントを含む
+      コンセプト文（マーケター向け＋ユーザー向け）を出力する。
+    inputs:
+      - id: own-product
+        label: 自社製品情報
+        dataType: string
+        description: 自社製品の品番・情報
+        required: true
+      - id: competitor-products
+        label: 競合製品情報
+        dataType: string
+        description: 競合製品の情報
+        required: true
+      - id: trigger
+        label: トリガー
+        dataType: string
+        description: 対象となる購買トリガー
+        required: true
+      - id: why-result
+        label: Why分析結果
+        dataType: json
+        description: Why分析の出力
+        required: true
+      - id: what-result
+        label: What分析結果
+        dataType: json
+        description: What分析の出力（USP含む）
+        required: true
+      - id: who-result
+        label: Who分析結果
+        dataType: json
+        description: Who分析の出力（ペルソナ含む）
+        required: true
+    outputs:
+      - id: concept
+        label: プロモーションコンセプト
+        dataType: json
+        description: "コンセプト文（マーケター向け＋ユーザー向け）と詳細説明"
+    prompt:
+      template: |
+        【目的】
+        プロジェクトナレッジに登録された顧客のトリガーの分析から、
+        製品USPを活かしたプロモーションコンセプトを生成する
+
+        1. 製品情報
+        #自社製品
+        {{own_product}}
+        #競合製品
+        {{competitor_products}}
+
+        2. 顧客理解（トリガー分析に基づく）
+        #トリガー
+        {{trigger}}
+
+        【生成プロセス】
+        ステップ1：トリガーの整理
+        - 顧客が本質的に達成したいこと
+        - 現在の解決方法の限界
+        - 顧客が感じている摩擦やストレス
+
+        ステップ2：USPとの接続点の発見
+        - USPが直接的に解決するトリガー
+        - USPが可能にする新しい体験
+        - 顧客の行動変容の可能性
+
+        ステップ3：コンセプトの定義
+        - 核となる価値提案
+        - 感情的ベネフィット
+        - 差別化ポイント
+
+        【アウトプット形式】
+        **コンセプト文（1-2文）**
+        **コンセプト文（ユーザー向け表現）**
+        **詳細説明**
+      variables:
+        - name: own_product
+          source: config-params.own-product
+          description: 自社製品情報
+        - name: competitor_products
+          source: config-params.competitor-products
+          description: 競合製品情報
+        - name: trigger
+          source: why-analysis.triggers
+          description: 対象トリガー
+    metadata:
+      output_name: コンセプト_品番別_ローンチ前
+      scenes: "SNS/広告TD/コピー"
+
+  # ─── コピー生成 ───
+  - id: copy-gen
+    name: コピー生成
+    category: llm
+    summary: コンセプトからキャッチコピー・広告コピーを生成
+    description: |
+      トリガーとコンセプトに基づいて、Panasonic製家電製品のキャッチコピーを生成する。
+      著名コピーライターの作風やコピーライティング教科書に基づく技法を参考に、
+      感性的・普遍的な表現を生成する。
+    inputs:
+      - id: trigger
+        label: トリガー
+        dataType: string
+        description: 対象となる購買トリガー
+        required: true
+      - id: concept
+        label: コンセプト
+        dataType: json
+        description: コンセプト生成ステップの出力
+        required: true
+      - id: why-result
+        label: Why分析結果
+        dataType: json
+        description: Why分析の結果
+        required: true
+      - id: what-result
+        label: What分析結果
+        dataType: json
+        description: What分析の結果
+      - id: who-result
+        label: Who分析結果
+        dataType: json
+        description: Who分析の結果
+    outputs:
+      - id: copy
+        label: 広告コピー
+        dataType: json
+        description: "キャッチコピー・ボディコピー等のコピーライティング成果物"
+    prompt:
+      template: |
+        【あなたの役割】
+        あなたは、優れたコピーライターです。
+        以下のトリガーとコンセプトに基づいて、Panasonic製の家電製品を想定した
+        キャッチコピーを生成してください。
+
+        #トリガー
+        {{trigger}}
+
+        #コンセプト
+        {{concept}}
+
+        【分析対象】
+        ・自社製品：Panasonicの家電製品（ブランド名を直接使わず、価値を想起させる表現で）
+        ・競合製品：他社の類似カテゴリ製品（直接の比較ではなく、差別化ポイントを暗示する）
+      variables:
+        - name: trigger
+          source: why-analysis.triggers
+          description: 対象トリガー
+        - name: concept
+          source: concept-gen.concept
+          description: コンセプト
+    metadata:
+      output_name: コンセプト→コピー（製品軸_ローンチ前）
+      scenes: "SNS/広告TD/コピー"
+
+  # ─── セールストーク（シナリオ軸） ───
+  - id: sales-scenario
+    name: セールストーク（シナリオ軸）
+    category: llm
+    summary: ターゲット別の7ステップ接客シナリオを生成
+    description: |
+      Why分析の結果を基に、店頭接客のプロフェッショナル向けセールススクリプトを生成する。
+      主要ターゲット別に7ステップ（質問→共感→Job代弁→ペイン明示→USP提案→期待描写→行動促進）
+      のシナリオと、競合切り返しトークを含む。
+    inputs:
+      - id: own-product
+        label: 自社品番
+        dataType: string
+        description: 自社製品品番
+        required: true
+      - id: competitor-products
+        label: 競合品番
+        dataType: string
+        description: 競合製品品番
+        required: true
+      - id: why-result
+        label: Why分析結果
+        dataType: json
+        description: Why分析の結果（Job/ペインポイント/トリガー）
+        required: true
+    outputs:
+      - id: sales-script
+        label: セールススクリプト
+        dataType: json
+        description: "ターゲット別シナリオ・製品強調ポイント・競合切り返しトーク"
+    prompt:
+      template: |
+        以下の情報を基に、包括的で詳細なセールススクリプトを作成してください。
+
+        【分析対象】
+        #自社製品 {{own_product}}
+        #競合製品 {{competitor_products}}
+
+        【出力要件】
+        ## 1. 主要ターゲット別シナリオ（最低3つ以上）
+        各セグメント向けに7ステップで構成：
+        1. 質問（悩み引き出し）
+        2. 共感（悩みに寄り添う）
+        3. Jobの代弁（理想の状態）
+        4. ペインポイント明示
+        5. USP提案（解決策）
+        6. 期待描写（変化後の未来）
+        7. 行動促進
+
+        ## 2. 詳細な製品情報と強調ポイント（最低5項目以上）
+        ## 3. 競合切り返しトーク（競合メーカー名の記述必須）
+      variables:
+        - name: own_product
+          source: config-params.own-product
+          description: 自社製品品番
+        - name: competitor_products
+          source: config-params.competitor-products
+          description: 競合製品品番
+    metadata:
+      output_name: セールストーク（シナリオ軸）_品番別_ローンチ前
+      scenes: "セールストーク"
+
+  # ─── セールストーク（よくある質問） ───
+  - id: sales-faq
+    name: セールストーク（よくある質問）
+    category: llm
+    summary: 店頭接客向けQ&Aを生成（最低20項目）
+    description: |
+      Why分析の結果と過去質問集を基に、店頭接客のプロフェッショナル向けQ&Aを作成する。
+      過去質問集の全項目を反映し、技術的根拠を含む詳細で実用的な回答を生成する。
+    inputs:
+      - id: own-product
+        label: 自社品番
+        dataType: string
+        description: 自社製品品番
+        required: true
+      - id: competitor-products
+        label: 競合品番
+        dataType: string
+        description: 競合製品品番
+        required: true
+      - id: why-result
+        label: Why分析結果
+        dataType: json
+        description: Why分析の結果
+        required: true
+    outputs:
+      - id: faq
+        label: Q&A集
+        dataType: json
+        description: "最低20項目以上のQ&A"
+    prompt:
+      template: |
+        以下の情報を基に、店頭接客のプロフェッショナル向けの包括的なQ&Aを作成してください。
+
+        【分析対象】
+        #自社製品 {{own_product}}
+        #競合製品 {{competitor_products}}
+
+        【出力要件】
+        ## よくある質問とその回答
+        - 過去質問集の全項目を基に質問を作成
+        - 最低20項目以上
+        - 各回答は技術的根拠を含む詳細で実用的な内容
+        - USPを自然に強調
+      variables:
+        - name: own_product
+          source: config-params.own-product
+          description: 自社製品品番
+        - name: competitor_products
+          source: config-params.competitor-products
+          description: 競合製品品番
+    metadata:
+      output_name: セールストーク（よくある質問）_品番別_ローンチ前
+      scenes: "セールストーク"
+
+  # ─── セールストーク（店頭での声掛け例） ───
+  - id: sales-greeting
+    name: セールストーク（声掛け例）
+    category: llm
+    summary: 店頭での最初の声かけパターンを生成（最低10パターン）
+    description: |
+      Why分析の結果を基に、店頭での最初の声かけ例を生成する。
+      顧客の状況別（一般的、製品興味あり、比較検討中、価格確認中、家族層等）に
+      プロの接客員として自然で効果的なアプローチを提示する。
+    inputs:
+      - id: own-product
+        label: 自社品番
+        dataType: string
+        description: 自社製品品番
+        required: true
+      - id: competitor-products
+        label: 競合品番
+        dataType: string
+        description: 競合製品品番
+        required: true
+      - id: why-result
+        label: Why分析結果
+        dataType: json
+        description: Why分析の結果
+        required: true
+    outputs:
+      - id: greeting-examples
+        label: 声掛け例
+        dataType: json
+        description: "最低10パターン以上の声かけ例"
+    prompt:
+      template: |
+        以下の情報を基に、プロの接客員目線の包括的で詳細な店頭での声かけ例を作成してください。
+
+        【分析対象】
+        #自社製品 {{own_product}}
+        #競合製品 {{competitor_products}}
+
+        【出力要件】
+        ## 店頭での最初の声かけ例（最低10パターン以上）
+        顧客の状況別に作成：
+        一般的、製品興味あり、比較検討中、価格確認中、家族層、単身者、高齢者、料理好き、技術志向 など
+      variables:
+        - name: own_product
+          source: config-params.own-product
+          description: 自社製品品番
+        - name: competitor_products
+          source: config-params.competitor-products
+          description: 競合製品品番
+    metadata:
+      output_name: セールストーク（店頭での声掛け例）_品番別_ローンチ前
+      scenes: "セールストーク"
+
+  # ─── 接客ストーリー STEP1 ───
+  - id: story-step1
+    name: 接客ストーリー STEP1
+    category: llm
+    summary: ペインポイント・USP一覧表を作成
+    description: |
+      顧客のジョブ（達成したい目標）に対して、ペインポイント（課題）と
+      USP（独自の強み）を紐づけた一覧表を作成する。
+      Why分析とWhat分析の結果を統合して構造化する。
+    inputs:
+      - id: why-result
+        label: Why分析結果
+        dataType: json
+        description: Why分析の結果（Job/ペインポイント）
+        required: true
+      - id: what-result
+        label: What分析結果
+        dataType: json
+        description: What分析の結果（USP/差別化ポイント）
+        required: true
+    outputs:
+      - id: pain-usp-table
+        label: ペインポイント・USP一覧表
+        dataType: json
+        description: "Job × ペインポイント × USP の対応表"
+    prompt:
+      template: |
+        # ステップ1: ペインポイント・USP一覧作成プロンプト
+
+        ## 目的
+        顧客のジョブ（達成したい目標）に対して、ペインポイント（課題）と
+        USP（独自の強み）を紐づけた一覧表を作成する。
+
+        ## インプット
+        - Why分析結果（Job/ペインポイント/トリガー）
+        - What分析結果（USP/差別化ポイント）
+
+        ## アウトプット
+        Job × ペインポイント × USP の対応表
+      variables: []
+    metadata:
+      output_name: 接客ストーリーSTEP1_ローンチ前
+      scenes: "Webサイト制作"
+
+  # ─── 接客ストーリー STEP2 ───
+  - id: story-step2
+    name: 接客ストーリー STEP2
+    category: llm
+    summary: 接客アプローチ（会話フロー）を生成
+    description: |
+      STEP1で作成したペインポイント・USP一覧表を基に、
+      顧客ジョブに対して効果的な接客アプローチ（会話フロー）を生成する。
+      課題発見→共感→解決提案→体験訴求の流れで構成。
+    inputs:
+      - id: pain-usp-table
+        label: ペインポイント・USP一覧表
+        dataType: json
+        description: STEP1の出力（Job × ペインポイント × USP 対応表）
+        required: true
+      - id: why-result
+        label: Why分析結果
+        dataType: json
+        description: Why分析の結果
+        required: true
+      - id: what-result
+        label: What分析結果
+        dataType: json
+        description: What分析の結果
+        required: true
+    outputs:
+      - id: service-approach
+        label: 接客アプローチ
+        dataType: json
+        description: "ジョブ別の接客会話フロー（課題発見→共感→解決提案→体験訴求）"
+    prompt:
+      template: |
+        # ステップ2: 接客アプローチ生成プロンプト
+
+        ## 目的
+        ステップ1で作成したペインポイント・USP一覧表を基に、
+        顧客ジョブに対して効果的な接客アプローチを生成する。
+
+        ## 構成
+        1. 課題発見（顧客のペインを引き出す質問）
+        2. 共感（顧客の状況への理解を示す）
+        3. 解決提案（USPを活かした解決策の提示）
+        4. 体験訴求（製品使用後の変化を描写）
+      variables: []
+    metadata:
+      output_name: 接客ストーリーSTEP2_ローンチ前
+      scenes: "Webサイト制作"
+
+connections:
+  # ── config-params → 各分析ステップ ──
+  - id: c-cfg-why-own
+    sourceNodeId: config-params
+    sourcePortId: own-product
+    targetNodeId: why-analysis
+    targetPortId: own-product
+  - id: c-cfg-why-comp
+    sourceNodeId: config-params
+    sourcePortId: competitor-products
+    targetNodeId: why-analysis
+    targetPortId: competitor-products
+  - id: c-cfg-what-own
+    sourceNodeId: config-params
+    sourcePortId: own-product
+    targetNodeId: what-analysis
+    targetPortId: own-product
+  - id: c-cfg-what-comp
+    sourceNodeId: config-params
+    sourcePortId: competitor-products
+    targetNodeId: what-analysis
+    targetPortId: competitor-products
+  - id: c-cfg-who-own
+    sourceNodeId: config-params
+    sourcePortId: own-product
+    targetNodeId: who-analysis
+    targetPortId: own-product
+  - id: c-cfg-who-comp
+    sourceNodeId: config-params
+    sourcePortId: competitor-products
+    targetNodeId: who-analysis
+    targetPortId: competitor-products
+  - id: c-cfg-concept-own
+    sourceNodeId: config-params
+    sourcePortId: own-product
+    targetNodeId: concept-gen
+    targetPortId: own-product
+  - id: c-cfg-concept-comp
+    sourceNodeId: config-params
+    sourcePortId: competitor-products
+    targetNodeId: concept-gen
+    targetPortId: competitor-products
+  - id: c-cfg-sales-scenario-own
+    sourceNodeId: config-params
+    sourcePortId: own-product
+    targetNodeId: sales-scenario
+    targetPortId: own-product
+  - id: c-cfg-sales-scenario-comp
+    sourceNodeId: config-params
+    sourcePortId: competitor-products
+    targetNodeId: sales-scenario
+    targetPortId: competitor-products
+  - id: c-cfg-sales-faq-own
+    sourceNodeId: config-params
+    sourcePortId: own-product
+    targetNodeId: sales-faq
+    targetPortId: own-product
+  - id: c-cfg-sales-faq-comp
+    sourceNodeId: config-params
+    sourcePortId: competitor-products
+    targetNodeId: sales-faq
+    targetPortId: competitor-products
+  - id: c-cfg-sales-greeting-own
+    sourceNodeId: config-params
+    sourcePortId: own-product
+    targetNodeId: sales-greeting
+    targetPortId: own-product
+  - id: c-cfg-sales-greeting-comp
+    sourceNodeId: config-params
+    sourcePortId: competitor-products
+    targetNodeId: sales-greeting
+    targetPortId: competitor-products
+
+  # ── input-data → why-analysis ──
+  - id: c-data-why
+    sourceNodeId: input-data
+    sourcePortId: reviews
+    targetNodeId: why-analysis
+    targetPortId: context-data
+    label: レビュー等のコンテキストデータ
+
+  # ── input-data → what-analysis ──
+  - id: c-data-what
+    sourceNodeId: input-data
+    sourcePortId: store-report
+    targetNodeId: what-analysis
+    targetPortId: context-data
+    label: 店頭接点レポート等
+
+  # ── Why → What（トリガー） ──
+  - id: c-why-what-trigger
+    sourceNodeId: why-analysis
+    sourcePortId: triggers
+    targetNodeId: what-analysis
+    targetPortId: trigger
+
+  # ── Why → Who ──
+  - id: c-why-who-trigger
+    sourceNodeId: why-analysis
+    sourcePortId: triggers
+    targetNodeId: who-analysis
+    targetPortId: trigger
+  - id: c-why-who-result
+    sourceNodeId: why-analysis
+    sourcePortId: why-result
+    targetNodeId: who-analysis
+    targetPortId: why-result
+
+  # ── What → Who ──
+  - id: c-what-who
+    sourceNodeId: what-analysis
+    sourcePortId: what-result
+    targetNodeId: who-analysis
+    targetPortId: what-result
+
+  # ── Why/What/Who → コンセプト生成 ──
+  - id: c-why-concept-trigger
+    sourceNodeId: why-analysis
+    sourcePortId: triggers
+    targetNodeId: concept-gen
+    targetPortId: trigger
+  - id: c-why-concept-result
+    sourceNodeId: why-analysis
+    sourcePortId: why-result
+    targetNodeId: concept-gen
+    targetPortId: why-result
+  - id: c-what-concept
+    sourceNodeId: what-analysis
+    sourcePortId: what-result
+    targetNodeId: concept-gen
+    targetPortId: what-result
+  - id: c-who-concept
+    sourceNodeId: who-analysis
+    sourcePortId: who-result
+    targetNodeId: concept-gen
+    targetPortId: who-result
+
+  # ── コンセプト → コピー ──
+  - id: c-concept-copy
+    sourceNodeId: concept-gen
+    sourcePortId: concept
+    targetNodeId: copy-gen
+    targetPortId: concept
+  - id: c-why-copy-trigger
+    sourceNodeId: why-analysis
+    sourcePortId: triggers
+    targetNodeId: copy-gen
+    targetPortId: trigger
+  - id: c-why-copy-result
+    sourceNodeId: why-analysis
+    sourcePortId: why-result
+    targetNodeId: copy-gen
+    targetPortId: why-result
+  - id: c-what-copy
+    sourceNodeId: what-analysis
+    sourcePortId: what-result
+    targetNodeId: copy-gen
+    targetPortId: what-result
+  - id: c-who-copy
+    sourceNodeId: who-analysis
+    sourcePortId: who-result
+    targetNodeId: copy-gen
+    targetPortId: who-result
+
+  # ── Why → セールストーク3種 ──
+  - id: c-why-sales-scenario
+    sourceNodeId: why-analysis
+    sourcePortId: why-result
+    targetNodeId: sales-scenario
+    targetPortId: why-result
+  - id: c-why-sales-faq
+    sourceNodeId: why-analysis
+    sourcePortId: why-result
+    targetNodeId: sales-faq
+    targetPortId: why-result
+  - id: c-why-sales-greeting
+    sourceNodeId: why-analysis
+    sourcePortId: why-result
+    targetNodeId: sales-greeting
+    targetPortId: why-result
+
+  # ── Why/What → 接客ストーリー STEP1 ──
+  - id: c-why-story1
+    sourceNodeId: why-analysis
+    sourcePortId: why-result
+    targetNodeId: story-step1
+    targetPortId: why-result
+  - id: c-what-story1
+    sourceNodeId: what-analysis
+    sourcePortId: what-result
+    targetNodeId: story-step1
+    targetPortId: what-result
+
+  # ── STEP1 → STEP2 ──
+  - id: c-story1-story2
+    sourceNodeId: story-step1
+    sourcePortId: pain-usp-table
+    targetNodeId: story-step2
+    targetPortId: pain-usp-table
+  - id: c-why-story2
+    sourceNodeId: why-analysis
+    sourcePortId: why-result
+    targetNodeId: story-step2
+    targetPortId: why-result
+  - id: c-what-story2
+    sourceNodeId: what-analysis
+    sourcePortId: what-result
+    targetNodeId: story-step2
+    targetPortId: what-result
+
+variants: []
