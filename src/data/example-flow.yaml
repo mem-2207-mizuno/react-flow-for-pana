@@ -1,0 +1,320 @@
+meta:
+  id: rag-chatbot
+  title: RAG Chatbot Pipeline
+  description: 検索拡張生成（RAG）を用いたチャットボットのワークフロー。ユーザーの質問に対して関連ドキュメントを検索し、LLMで回答を生成する。
+  version: "1.0"
+
+preconditions:
+  - key: embedding_strategy
+    label: Embedding Strategy
+    options:
+      - label: dense
+        description: Dense embeddings (OpenAI text-embedding-ada-002) を使用
+      - label: sparse
+        description: Sparse embeddings (BM25) を使用
+      - label: hybrid
+        description: Dense + Sparse を組み合わせた Reciprocal Rank Fusion
+
+steps:
+  - id: user-input
+    name: User Input
+    category: input
+    summary: ユーザーからの質問を受け取る
+    description: |
+      エントリーポイント。ユーザーが入力した自然言語の質問を受け取り、
+      後続のステップへ渡す。
+    inputs: []
+    outputs:
+      - id: query
+        label: Query
+        dataType: string
+        description: ユーザーが入力した質問テキスト
+      - id: session-id
+        label: Session ID
+        dataType: string
+        description: チャットセッションの識別子
+
+  - id: embed-query
+    name: Embed Query
+    category: transform
+    summary: クエリをベクトル化
+    description: |
+      テキストクエリをベクトル埋め込みに変換する。
+      OpenAI text-embedding-ada-002 モデルを使用し、
+      1536次元のベクトルを生成する。
+    inputs:
+      - id: text
+        label: Text
+        dataType: string
+        description: 埋め込みに変換するテキスト
+        required: true
+    outputs:
+      - id: embedding
+        label: Embedding
+        dataType: embedding
+        description: 1536次元のベクトル埋め込み
+    metadata:
+      model: text-embedding-ada-002
+      dimensions: 1536
+
+  - id: vector-search
+    name: Vector Search
+    category: retrieval
+    summary: 関連ドキュメントを検索
+    description: |
+      ベクトルデータベース (Pinecone) から、クエリベクトルに類似した
+      ドキュメントチャンクを検索する。
+      類似度スコアが閾値を超えるものを上位K件返す。
+    inputs:
+      - id: query-embedding
+        label: Query Embedding
+        dataType: embedding
+        description: 検索クエリのベクトル
+        required: true
+    outputs:
+      - id: documents
+        label: Documents
+        dataType: json
+        description: "関連ドキュメントの配列 [{text, score, metadata}]"
+      - id: search-metadata
+        label: Search Metadata
+        dataType: json
+        description: "検索メタデータ {total_results, latency_ms}"
+    metadata:
+      provider: pinecone
+      topK: 5
+      threshold: 0.7
+
+  - id: generate-response
+    name: Generate Response
+    category: llm
+    summary: コンテキストを基に回答を生成
+    description: |
+      検索されたドキュメントをコンテキストとして、ユーザーの質問に対する
+      回答をLLMで生成する。回答にはソースの引用情報も含まれる。
+    inputs:
+      - id: context
+        label: Context Documents
+        dataType: json
+        description: 検索で取得した関連ドキュメント群
+        required: true
+      - id: query
+        label: User Query
+        dataType: string
+        description: ユーザーの元の質問
+        required: true
+    outputs:
+      - id: response
+        label: Response
+        dataType: string
+        description: 生成された回答テキスト
+      - id: citations
+        label: Citations
+        dataType: json
+        description: "引用情報の配列 [{source, page, relevance}]"
+    prompt:
+      systemPrompt: |
+        あなたは親切なアシスタントです。提供されたコンテキストに基づいてのみ回答してください。
+        コンテキストに十分な情報がない場合は、正直にそう伝えてください。
+        回答には必ず引用元を明記してください。
+      template: |
+        以下のドキュメントを参照して、ユーザーの質問に回答してください。
+
+        ## 参照ドキュメント
+        {{context}}
+
+        ## ユーザーの質問
+        {{query}}
+
+        上記のドキュメントに基づいて、正確かつ包括的な回答をお願いします。
+        引用元があれば [出典: ドキュメント名] の形式で明記してください。
+      variables:
+        - name: context
+          source: vector-search.documents
+          description: 検索で取得したドキュメントチャンク
+        - name: query
+          source: user-input.query
+          description: ユーザーの元の質問テキスト
+    metadata:
+      model: gpt-4o
+      temperature: 0.3
+      max_tokens: 2048
+
+  - id: format-output
+    name: Format Output
+    category: output
+    summary: 最終レスポンスをフォーマット
+    description: |
+      生成された回答と引用情報を最終的な出力構造にフォーマットする。
+      セッションIDを付与し、レスポンスメタデータを追加する。
+    inputs:
+      - id: response
+        label: Response
+        dataType: string
+        description: LLMが生成した回答テキスト
+        required: true
+      - id: citations
+        label: Citations
+        dataType: json
+        description: 引用情報
+      - id: session-id
+        label: Session ID
+        dataType: string
+        description: セッション識別子
+    outputs:
+      - id: result
+        label: Final Result
+        dataType: json
+        description: "最終出力 {answer, citations, session_id, timestamp}"
+
+connections:
+  - id: c1
+    sourceNodeId: user-input
+    sourcePortId: query
+    targetNodeId: embed-query
+    targetPortId: text
+  - id: c2
+    sourceNodeId: embed-query
+    sourcePortId: embedding
+    targetNodeId: vector-search
+    targetPortId: query-embedding
+  - id: c3
+    sourceNodeId: vector-search
+    sourcePortId: documents
+    targetNodeId: generate-response
+    targetPortId: context
+  - id: c4
+    sourceNodeId: user-input
+    sourcePortId: query
+    targetNodeId: generate-response
+    targetPortId: query
+  - id: c5
+    sourceNodeId: generate-response
+    sourcePortId: response
+    targetNodeId: format-output
+    targetPortId: response
+  - id: c6
+    sourceNodeId: generate-response
+    sourcePortId: citations
+    targetNodeId: format-output
+    targetPortId: citations
+  - id: c7
+    sourceNodeId: user-input
+    sourcePortId: session-id
+    targetNodeId: format-output
+    targetPortId: session-id
+
+variants:
+  - id: sparse-embedding
+    name: Sparse Embedding (BM25)
+    conditions:
+      embedding_strategy: sparse
+    overrideSteps:
+      - id: embed-query
+        name: BM25 Tokenize
+        summary: クエリをBM25トークンに変換
+        description: |
+          Dense embeddingの代わりにBM25トークナイザを使用。
+          語彙ベースのスパース表現で検索を行う。
+        metadata:
+          model: bm25
+          dimensions: null
+
+  - id: hybrid-embedding
+    name: Hybrid Strategy (Dense + Sparse)
+    conditions:
+      embedding_strategy: hybrid
+    addSteps:
+      - id: bm25-tokenize
+        name: BM25 Tokenize
+        category: transform
+        summary: スパーストークン化（並列実行）
+        description: |
+          Dense embeddingと並列にBM25スパーストークン化を実行。
+          Hybrid検索の片方の入力を生成する。
+        inputs:
+          - id: text
+            label: Text
+            dataType: string
+            description: トークン化するテキスト
+            required: true
+        outputs:
+          - id: sparse-vector
+            label: Sparse Vector
+            dataType: embedding
+            description: BM25スパースベクトル表現
+
+      - id: sparse-search
+        name: Sparse Search
+        category: retrieval
+        summary: スパース検索を実行
+        description: |
+          BM25スパースベクトルを使用してドキュメントを検索。
+          Dense検索と並列に実行される。
+        inputs:
+          - id: sparse-embedding
+            label: Sparse Embedding
+            dataType: embedding
+            description: BM25スパースベクトル
+            required: true
+        outputs:
+          - id: sparse-results
+            label: Sparse Results
+            dataType: json
+            description: "スパース検索結果 [{text, score, metadata}]"
+
+      - id: rrf-merge
+        name: RRF Merge
+        category: transform
+        summary: 検索結果を統合（RRF）
+        description: |
+          Dense検索とSparse検索の結果をReciprocal Rank Fusionで統合。
+          両方の検索手法の長所を活かした再ランキングを行う。
+        inputs:
+          - id: dense-results
+            label: Dense Results
+            dataType: json
+            description: Dense vector検索の結果
+            required: true
+          - id: sparse-results
+            label: Sparse Results
+            dataType: json
+            description: Sparse (BM25) 検索の結果
+            required: true
+        outputs:
+          - id: merged-documents
+            label: Merged Documents
+            dataType: json
+            description: "RRF統合後の再ランキング結果"
+        metadata:
+          algorithm: reciprocal_rank_fusion
+          k: 60
+
+    addConnections:
+      - id: ch1
+        sourceNodeId: user-input
+        sourcePortId: query
+        targetNodeId: bm25-tokenize
+        targetPortId: text
+      - id: ch2
+        sourceNodeId: bm25-tokenize
+        sourcePortId: sparse-vector
+        targetNodeId: sparse-search
+        targetPortId: sparse-embedding
+      - id: ch3
+        sourceNodeId: sparse-search
+        sourcePortId: sparse-results
+        targetNodeId: rrf-merge
+        targetPortId: sparse-results
+      - id: ch4
+        sourceNodeId: vector-search
+        sourcePortId: documents
+        targetNodeId: rrf-merge
+        targetPortId: dense-results
+      - id: ch5
+        sourceNodeId: rrf-merge
+        sourcePortId: merged-documents
+        targetNodeId: generate-response
+        targetPortId: context
+    removeConnectionIds:
+      - c3

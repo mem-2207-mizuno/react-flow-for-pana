@@ -1,0 +1,49 @@
+.prompt-viewer {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.prompt-viewer__section {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.prompt-viewer__label {
+  font-size: 11px;
+  font-weight: 600;
+  color: #9ca3af;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.prompt-viewer__pre {
+  font-family: ui-monospace, 'Cascadia Code', 'Fira Code', Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 12px;
+  margin: 0;
+  color: #374151;
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.prompt-viewer__variable {
+  display: inline;
+  padding: 1px 4px;
+  border: 1px solid;
+  border-radius: 3px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.prompt-viewer__variable:hover {
+  opacity: 0.8;
+}

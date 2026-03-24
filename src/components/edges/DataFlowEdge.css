@@ -1,0 +1,18 @@
+.data-flow-edge__label {
+  position: absolute;
+  font-size: 10px;
+  font-weight: 600;
+  background: #fff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  border: 1px solid;
+  pointer-events: all;
+  white-space: nowrap;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.react-flow__edge:hover .data-flow-edge__label,
+.data-flow-edge__label:hover {
+  opacity: 1;
+}
