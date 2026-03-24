@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# GAS build artifacts
+gas/index.html
+gas/.clasp.json
+gas/.deploymentId

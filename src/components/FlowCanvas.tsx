@@ -4,7 +4,6 @@ import {
   Controls,
   Background,
   BackgroundVariant,
-  applyNodeChanges,
   type Node,
   type Edge,
   type NodeChange,

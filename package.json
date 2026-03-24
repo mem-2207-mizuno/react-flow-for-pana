@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",
+    "build:gas": "tsc -b && vite build --mode gas",
+    "push": "bun run build:gas && cp dist/index.html gas/index.html && cd gas && clasp push --force",
+    "deploy": "bun run push && bash scripts/deploy-gas.sh",
     "lint": "eslint .",
     "preview": "vite preview"
   },
@@ -29,6 +32,7 @@
     "globals": "^17.4.0",
     "typescript": "~5.9.3",
     "typescript-eslint": "^8.57.0",
-    "vite": "^8.0.1"
+    "vite": "^8.0.1",
+    "vite-plugin-singlefile": "^2.3.2"
   }
 }
