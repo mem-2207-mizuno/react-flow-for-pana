@@ -4,8 +4,10 @@ import {
   Controls,
   Background,
   BackgroundVariant,
+  applyNodeChanges,
   type Node,
   type Edge,
+  type NodeChange,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { StepNode } from './nodes/StepNode';
@@ -21,9 +23,10 @@ interface Props {
   edges: Edge[];
   onNodeClick?: (nodeId: string) => void;
   onNodeHover?: (nodeId: string | null) => void;
+  onNodesChange?: (changes: NodeChange<Node<StepNodeData>>[]) => void;
 }
 
-export function FlowCanvas({ nodes, edges, onNodeClick, onNodeHover }: Props) {
+export function FlowCanvas({ nodes, edges, onNodeClick, onNodeHover, onNodesChange }: Props) {
   return (
     <div style={{ width: '100%', height: '100%' }}>
       <ReactFlow
@@ -34,13 +37,15 @@ export function FlowCanvas({ nodes, edges, onNodeClick, onNodeHover }: Props) {
         onNodeClick={(_event, node) => onNodeClick?.(node.id)}
         onNodeMouseEnter={(_event, node) => onNodeHover?.(node.id)}
         onNodeMouseLeave={() => onNodeHover?.(null)}
-        nodesDraggable={false}
+        onNodesChange={onNodesChange}
+        nodesDraggable={true}
         nodesConnectable={false}
         connectOnClick={false}
         elementsSelectable={true}
         panOnDrag={true}
         zoomOnScroll={true}
         zoomOnPinch={true}
+        minZoom={0.1}
         fitView
         fitViewOptions={{ padding: 0.2, duration: 400 }}
         defaultEdgeOptions={{

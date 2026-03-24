@@ -1,5 +1,5 @@
-import { useState, useMemo, useCallback } from 'react';
-import { ReactFlowProvider } from '@xyflow/react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
+import { ReactFlowProvider, applyNodeChanges, type Node, type NodeChange } from '@xyflow/react';
 import { loadFlowDefinition } from '@/data/loader';
 import { resolveFlow } from '@/utils/variantResolver';
 import { transformFlowToReactFlow } from '@/utils/flowTransform';
@@ -7,6 +7,7 @@ import { FlowCanvas } from '@/components/FlowCanvas';
 import { FlowHeader } from '@/components/controls/FlowHeader';
 import { PreconditionSelector } from '@/components/controls/PreconditionSelector';
 import { DetailPanel } from '@/components/panels/DetailPanel';
+import type { StepNodeData } from '@/types/flow';
 import exampleFlowYaml from '@/data/product-sku-pre-launch.yaml?raw';
 import './App.css';
 
@@ -35,9 +36,25 @@ export default function App() {
     [selectedConditions],
   );
 
-  const { nodes, edges } = useMemo(
+  // Compute initial layout from dagre
+  const { nodes: initialNodes, edges } = useMemo(
     () => transformFlowToReactFlow(resolved.steps, resolved.connections, flowDef.layout),
     [resolved],
+  );
+
+  // Manage nodes as state so drag positions are preserved
+  const [nodes, setNodes] = useState<Node<StepNodeData>[]>(initialNodes);
+
+  // Reset node positions when the flow changes (e.g. precondition switch)
+  useEffect(() => {
+    setNodes(initialNodes);
+  }, [initialNodes]);
+
+  const handleNodesChange = useCallback(
+    (changes: NodeChange<Node<StepNodeData>>[]) => {
+      setNodes((prev) => applyNodeChanges(changes, prev));
+    },
+    [],
   );
 
   const selectedStep = useMemo(
@@ -107,6 +124,7 @@ export default function App() {
               edges={edgesWithHighlight}
               onNodeClick={handleNodeClick}
               onNodeHover={handleNodeHover}
+              onNodesChange={handleNodesChange}
             />
           </div>
           {selectedStep && (
