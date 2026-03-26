@@ -15,6 +15,7 @@ export const PORT_COLORS: Record<PortDataType, string> = {
   number:         '#22c55e',
   boolean:        '#f59e0b',
   json:           '#a855f7',
+  html:           '#ec4899',
   image:          '#ef4444',
   embedding:      '#06b6d4',
   prompt:         '#f97316',

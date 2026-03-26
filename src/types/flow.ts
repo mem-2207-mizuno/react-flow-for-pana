@@ -4,6 +4,7 @@ export type PortDataType =
   | 'number'
   | 'boolean'
   | 'json'
+  | 'html'
   | 'image'
   | 'embedding'
   | 'prompt'
@@ -34,6 +35,13 @@ export interface PromptTemplate {
   systemPrompt?: string;
 }
 
+/** An artifact (prompt or output file) associated with a step */
+export interface StepArtifact {
+  type: 'prompt' | 'output';
+  label: string;
+  url: string;
+}
+
 /** Node categories for visual differentiation */
 export type NodeCategory =
   | 'input'
@@ -54,6 +62,7 @@ export interface StepDefinition {
   inputs: PortDefinition[];
   outputs: PortDefinition[];
   prompt?: PromptTemplate;
+  artifacts?: StepArtifact[];
   metadata?: Record<string, string | number | boolean>;
 }
 

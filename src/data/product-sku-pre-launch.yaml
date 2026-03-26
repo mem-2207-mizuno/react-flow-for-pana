@@ -1,13 +1,19 @@
 meta:
   id: product-sku-pre-launch
-  title: 製品軸（品番別）ローンチ前フロー
+  title: 製品軸（品番別）サイトストーリー生成フロー
   description: |
-    顧客理解（Why/What/Who）を起点に、コンセプト・コピー・セールストーク・接客ストーリーなど
-    各種マーケティングアウトプットを生成するフロー。
-    インプットは前モデル＋競合情報。
-  version: "1.0"
+    顧客理解（Why/What/Who）を起点に、サイトストーリーを生成するフロー。
+    製品タイプに応じてヘアドライヤー（NA0K型）と炊飯器（N510D型）を切り替え可能。
+  version: "2.0"
 
-preconditions: []
+preconditions:
+  - key: product-type
+    label: 製品タイプ
+    options:
+      - label: na0k
+        description: ヘアドライヤー（NA0K）— 3構成案(Why/What/Who重視)ベース
+      - label: n510d
+        description: 炊飯器（N510D）— 3データソース(ドライヤーStory/PIM/現行サイト)ベース
 
 steps:
   # ─── インプットデータ ───
@@ -66,6 +72,36 @@ steps:
         dataType: json
         description: 購入者へのアンケート結果（構造化データ）
 
+  - id: story-input-data
+    name: ストーリー生成インプット
+    category: input
+    summary: サイトストーリー生成用の参照データ
+    description: |
+      サイトストーリー生成に必要な参照データ群。
+      現行サイト、商品プロモ現行サイト、PIM情報、ドライヤーStory、セクション一覧を含む。
+    inputs: []
+    outputs:
+      - id: current-site
+        label: 現行サイト
+        dataType: html
+        description: 現行の製品Webサイトコンテンツ（ハルシネーションチェック用の正解データ）
+      - id: promo-site
+        label: 商品プロモ現行サイト
+        dataType: json
+        description: 商品プロモ検討会の資料内「Webサイト構成案」
+      - id: pim-data
+        label: PIM情報
+        dataType: json
+        description: Product Information Management データ（製品スペック・特長テキスト）
+      - id: dryer-story
+        label: ドライヤーStory
+        dataType: html
+        description: NA0Kの完成版ストーリー（構成・トーン&マナーの参照用）
+      - id: section-list
+        label: セクション一覧
+        dataType: json
+        description: サイトのセクション構成一覧
+
   # ─── Why分析 ───
   - id: why-analysis
     name: Why分析
@@ -94,11 +130,11 @@ steps:
     outputs:
       - id: why-result
         label: Why分析結果
-        dataType: json
+        dataType: html
         description: "Job分析・ペインポイント・購入動機・トリガー分析の結果"
       - id: triggers
         label: 購買トリガー
-        dataType: json
+        dataType: html
         description: "抽出された購買トリガー一覧（Life Change / Crisis / Inspiration）"
     prompt:
       template: |
@@ -174,7 +210,7 @@ steps:
     outputs:
       - id: what-result
         label: What分析結果
-        dataType: json
+        dataType: html
         description: "USP・差別化・ベネフィット・競合分析の結果"
       - id: usp
         label: USP
@@ -246,18 +282,18 @@ steps:
         required: true
       - id: why-result
         label: Why分析結果
-        dataType: json
+        dataType: html
         description: Why分析の結果（Job/ペインポイント/トリガー）
         required: true
       - id: what-result
         label: What分析結果
-        dataType: json
+        dataType: html
         description: What分析の結果（USP/差別化/ベネフィット）
         required: true
     outputs:
       - id: who-result
         label: Who分析結果
-        dataType: json
+        dataType: html
         description: "顧客像・利用シーン・製品導入後変化の分析結果"
     prompt:
       template: |
@@ -296,427 +332,6 @@ steps:
       output_name: who_品番別_ローンチ前
       scenes: "4P企画, SNS/広告TD/コピー, セールストーク"
 
-  # ─── コンセプト生成 ───
-  - id: concept-gen
-    name: コンセプト生成
-    category: llm
-    summary: トリガー×USPからプロモーションコンセプトを生成
-    description: |
-      Why/What/Who分析の結果を統合し、製品USPを活かしたプロモーションコンセプトを生成する。
-      核となる価値提案、感情的ベネフィット、差別化ポイントを含む
-      コンセプト文（マーケター向け＋ユーザー向け）を出力する。
-    inputs:
-      - id: own-product
-        label: 自社製品情報
-        dataType: string
-        description: 自社製品の品番・情報
-        required: true
-      - id: competitor-products
-        label: 競合製品情報
-        dataType: string
-        description: 競合製品の情報
-        required: true
-      - id: trigger
-        label: トリガー
-        dataType: string
-        description: 対象となる購買トリガー
-        required: true
-      - id: why-result
-        label: Why分析結果
-        dataType: json
-        description: Why分析の出力
-        required: true
-      - id: what-result
-        label: What分析結果
-        dataType: json
-        description: What分析の出力（USP含む）
-        required: true
-      - id: who-result
-        label: Who分析結果
-        dataType: json
-        description: Who分析の出力（ペルソナ含む）
-        required: true
-    outputs:
-      - id: concept
-        label: プロモーションコンセプト
-        dataType: json
-        description: "コンセプト文（マーケター向け＋ユーザー向け）と詳細説明"
-    prompt:
-      template: |
-        【目的】
-        プロジェクトナレッジに登録された顧客のトリガーの分析から、
-        製品USPを活かしたプロモーションコンセプトを生成する
-
-        1. 製品情報
-        #自社製品
-        {{own_product}}
-        #競合製品
-        {{competitor_products}}
-
-        2. 顧客理解（トリガー分析に基づく）
-        #トリガー
-        {{trigger}}
-
-        【生成プロセス】
-        ステップ1：トリガーの整理
-        - 顧客が本質的に達成したいこと
-        - 現在の解決方法の限界
-        - 顧客が感じている摩擦やストレス
-
-        ステップ2：USPとの接続点の発見
-        - USPが直接的に解決するトリガー
-        - USPが可能にする新しい体験
-        - 顧客の行動変容の可能性
-
-        ステップ3：コンセプトの定義
-        - 核となる価値提案
-        - 感情的ベネフィット
-        - 差別化ポイント
-
-        【アウトプット形式】
-        **コンセプト文（1-2文）**
-        **コンセプト文（ユーザー向け表現）**
-        **詳細説明**
-      variables:
-        - name: own_product
-          source: config-params.own-product
-          description: 自社製品情報
-        - name: competitor_products
-          source: config-params.competitor-products
-          description: 競合製品情報
-        - name: trigger
-          source: why-analysis.triggers
-          description: 対象トリガー
-    metadata:
-      output_name: コンセプト_品番別_ローンチ前
-      scenes: "SNS/広告TD/コピー"
-
-  # ─── コピー生成 ───
-  - id: copy-gen
-    name: コピー生成
-    category: llm
-    summary: コンセプトからキャッチコピー・広告コピーを生成
-    description: |
-      トリガーとコンセプトに基づいて、Panasonic製家電製品のキャッチコピーを生成する。
-      著名コピーライターの作風やコピーライティング教科書に基づく技法を参考に、
-      感性的・普遍的な表現を生成する。
-    inputs:
-      - id: trigger
-        label: トリガー
-        dataType: string
-        description: 対象となる購買トリガー
-        required: true
-      - id: concept
-        label: コンセプト
-        dataType: json
-        description: コンセプト生成ステップの出力
-        required: true
-      - id: why-result
-        label: Why分析結果
-        dataType: json
-        description: Why分析の結果
-        required: true
-      - id: what-result
-        label: What分析結果
-        dataType: json
-        description: What分析の結果
-      - id: who-result
-        label: Who分析結果
-        dataType: json
-        description: Who分析の結果
-    outputs:
-      - id: copy
-        label: 広告コピー
-        dataType: json
-        description: "キャッチコピー・ボディコピー等のコピーライティング成果物"
-    prompt:
-      template: |
-        【あなたの役割】
-        あなたは、優れたコピーライターです。
-        以下のトリガーとコンセプトに基づいて、Panasonic製の家電製品を想定した
-        キャッチコピーを生成してください。
-
-        #トリガー
-        {{trigger}}
-
-        #コンセプト
-        {{concept}}
-
-        【分析対象】
-        ・自社製品：Panasonicの家電製品（ブランド名を直接使わず、価値を想起させる表現で）
-        ・競合製品：他社の類似カテゴリ製品（直接の比較ではなく、差別化ポイントを暗示する）
-      variables:
-        - name: trigger
-          source: why-analysis.triggers
-          description: 対象トリガー
-        - name: concept
-          source: concept-gen.concept
-          description: コンセプト
-    metadata:
-      output_name: コンセプト→コピー（製品軸_ローンチ前）
-      scenes: "SNS/広告TD/コピー"
-
-  # ─── セールストーク（シナリオ軸） ───
-  - id: sales-scenario
-    name: セールストーク（シナリオ軸）
-    category: llm
-    summary: ターゲット別の7ステップ接客シナリオを生成
-    description: |
-      Why分析の結果を基に、店頭接客のプロフェッショナル向けセールススクリプトを生成する。
-      主要ターゲット別に7ステップ（質問→共感→Job代弁→ペイン明示→USP提案→期待描写→行動促進）
-      のシナリオと、競合切り返しトークを含む。
-    inputs:
-      - id: own-product
-        label: 自社品番
-        dataType: string
-        description: 自社製品品番
-        required: true
-      - id: competitor-products
-        label: 競合品番
-        dataType: string
-        description: 競合製品品番
-        required: true
-      - id: why-result
-        label: Why分析結果
-        dataType: json
-        description: Why分析の結果（Job/ペインポイント/トリガー）
-        required: true
-    outputs:
-      - id: sales-script
-        label: セールススクリプト
-        dataType: json
-        description: "ターゲット別シナリオ・製品強調ポイント・競合切り返しトーク"
-    prompt:
-      template: |
-        以下の情報を基に、包括的で詳細なセールススクリプトを作成してください。
-
-        【分析対象】
-        #自社製品 {{own_product}}
-        #競合製品 {{competitor_products}}
-
-        【出力要件】
-        ## 1. 主要ターゲット別シナリオ（最低3つ以上）
-        各セグメント向けに7ステップで構成：
-        1. 質問（悩み引き出し）
-        2. 共感（悩みに寄り添う）
-        3. Jobの代弁（理想の状態）
-        4. ペインポイント明示
-        5. USP提案（解決策）
-        6. 期待描写（変化後の未来）
-        7. 行動促進
-
-        ## 2. 詳細な製品情報と強調ポイント（最低5項目以上）
-        ## 3. 競合切り返しトーク（競合メーカー名の記述必須）
-      variables:
-        - name: own_product
-          source: config-params.own-product
-          description: 自社製品品番
-        - name: competitor_products
-          source: config-params.competitor-products
-          description: 競合製品品番
-    metadata:
-      output_name: セールストーク（シナリオ軸）_品番別_ローンチ前
-      scenes: "セールストーク"
-
-  # ─── セールストーク（よくある質問） ───
-  - id: sales-faq
-    name: セールストーク（よくある質問）
-    category: llm
-    summary: 店頭接客向けQ&Aを生成（最低20項目）
-    description: |
-      Why分析の結果と過去質問集を基に、店頭接客のプロフェッショナル向けQ&Aを作成する。
-      過去質問集の全項目を反映し、技術的根拠を含む詳細で実用的な回答を生成する。
-    inputs:
-      - id: own-product
-        label: 自社品番
-        dataType: string
-        description: 自社製品品番
-        required: true
-      - id: competitor-products
-        label: 競合品番
-        dataType: string
-        description: 競合製品品番
-        required: true
-      - id: why-result
-        label: Why分析結果
-        dataType: json
-        description: Why分析の結果
-        required: true
-    outputs:
-      - id: faq
-        label: Q&A集
-        dataType: json
-        description: "最低20項目以上のQ&A"
-    prompt:
-      template: |
-        以下の情報を基に、店頭接客のプロフェッショナル向けの包括的なQ&Aを作成してください。
-
-        【分析対象】
-        #自社製品 {{own_product}}
-        #競合製品 {{competitor_products}}
-
-        【出力要件】
-        ## よくある質問とその回答
-        - 過去質問集の全項目を基に質問を作成
-        - 最低20項目以上
-        - 各回答は技術的根拠を含む詳細で実用的な内容
-        - USPを自然に強調
-      variables:
-        - name: own_product
-          source: config-params.own-product
-          description: 自社製品品番
-        - name: competitor_products
-          source: config-params.competitor-products
-          description: 競合製品品番
-    metadata:
-      output_name: セールストーク（よくある質問）_品番別_ローンチ前
-      scenes: "セールストーク"
-
-  # ─── セールストーク（店頭での声掛け例） ───
-  - id: sales-greeting
-    name: セールストーク（声掛け例）
-    category: llm
-    summary: 店頭での最初の声かけパターンを生成（最低10パターン）
-    description: |
-      Why分析の結果を基に、店頭での最初の声かけ例を生成する。
-      顧客の状況別（一般的、製品興味あり、比較検討中、価格確認中、家族層等）に
-      プロの接客員として自然で効果的なアプローチを提示する。
-    inputs:
-      - id: own-product
-        label: 自社品番
-        dataType: string
-        description: 自社製品品番
-        required: true
-      - id: competitor-products
-        label: 競合品番
-        dataType: string
-        description: 競合製品品番
-        required: true
-      - id: why-result
-        label: Why分析結果
-        dataType: json
-        description: Why分析の結果
-        required: true
-    outputs:
-      - id: greeting-examples
-        label: 声掛け例
-        dataType: json
-        description: "最低10パターン以上の声かけ例"
-    prompt:
-      template: |
-        以下の情報を基に、プロの接客員目線の包括的で詳細な店頭での声かけ例を作成してください。
-
-        【分析対象】
-        #自社製品 {{own_product}}
-        #競合製品 {{competitor_products}}
-
-        【出力要件】
-        ## 店頭での最初の声かけ例（最低10パターン以上）
-        顧客の状況別に作成：
-        一般的、製品興味あり、比較検討中、価格確認中、家族層、単身者、高齢者、料理好き、技術志向 など
-      variables:
-        - name: own_product
-          source: config-params.own-product
-          description: 自社製品品番
-        - name: competitor_products
-          source: config-params.competitor-products
-          description: 競合製品品番
-    metadata:
-      output_name: セールストーク（店頭での声掛け例）_品番別_ローンチ前
-      scenes: "セールストーク"
-
-  # ─── 接客ストーリー STEP1 ───
-  - id: story-step1
-    name: 接客ストーリー STEP1
-    category: llm
-    summary: ペインポイント・USP一覧表を作成
-    description: |
-      顧客のジョブ（達成したい目標）に対して、ペインポイント（課題）と
-      USP（独自の強み）を紐づけた一覧表を作成する。
-      Why分析とWhat分析の結果を統合して構造化する。
-    inputs:
-      - id: why-result
-        label: Why分析結果
-        dataType: json
-        description: Why分析の結果（Job/ペインポイント）
-        required: true
-      - id: what-result
-        label: What分析結果
-        dataType: json
-        description: What分析の結果（USP/差別化ポイント）
-        required: true
-    outputs:
-      - id: pain-usp-table
-        label: ペインポイント・USP一覧表
-        dataType: json
-        description: "Job × ペインポイント × USP の対応表"
-    prompt:
-      template: |
-        # ステップ1: ペインポイント・USP一覧作成プロンプト
-
-        ## 目的
-        顧客のジョブ（達成したい目標）に対して、ペインポイント（課題）と
-        USP（独自の強み）を紐づけた一覧表を作成する。
-
-        ## インプット
-        - Why分析結果（Job/ペインポイント/トリガー）
-        - What分析結果（USP/差別化ポイント）
-
-        ## アウトプット
-        Job × ペインポイント × USP の対応表
-      variables: []
-    metadata:
-      output_name: 接客ストーリーSTEP1_ローンチ前
-      scenes: "Webサイト制作"
-
-  # ─── 接客ストーリー STEP2 ───
-  - id: story-step2
-    name: 接客ストーリー STEP2
-    category: llm
-    summary: 接客アプローチ（会話フロー）を生成
-    description: |
-      STEP1で作成したペインポイント・USP一覧表を基に、
-      顧客ジョブに対して効果的な接客アプローチ（会話フロー）を生成する。
-      課題発見→共感→解決提案→体験訴求の流れで構成。
-    inputs:
-      - id: pain-usp-table
-        label: ペインポイント・USP一覧表
-        dataType: json
-        description: STEP1の出力（Job × ペインポイント × USP 対応表）
-        required: true
-      - id: why-result
-        label: Why分析結果
-        dataType: json
-        description: Why分析の結果
-        required: true
-      - id: what-result
-        label: What分析結果
-        dataType: json
-        description: What分析の結果
-        required: true
-    outputs:
-      - id: service-approach
-        label: 接客アプローチ
-        dataType: json
-        description: "ジョブ別の接客会話フロー（課題発見→共感→解決提案→体験訴求）"
-    prompt:
-      template: |
-        # ステップ2: 接客アプローチ生成プロンプト
-
-        ## 目的
-        ステップ1で作成したペインポイント・USP一覧表を基に、
-        顧客ジョブに対して効果的な接客アプローチを生成する。
-
-        ## 構成
-        1. 課題発見（顧客のペインを引き出す質問）
-        2. 共感（顧客の状況への理解を示す）
-        3. 解決提案（USPを活かした解決策の提示）
-        4. 体験訴求（製品使用後の変化を描写）
-      variables: []
-    metadata:
-      output_name: 接客ストーリーSTEP2_ローンチ前
-      scenes: "Webサイト制作"
-
 connections:
   # ── config-params → 各分析ステップ ──
   - id: c-cfg-why-own
@@ -748,46 +363,6 @@ connections:
     sourceNodeId: config-params
     sourcePortId: competitor-products
     targetNodeId: who-analysis
-    targetPortId: competitor-products
-  - id: c-cfg-concept-own
-    sourceNodeId: config-params
-    sourcePortId: own-product
-    targetNodeId: concept-gen
-    targetPortId: own-product
-  - id: c-cfg-concept-comp
-    sourceNodeId: config-params
-    sourcePortId: competitor-products
-    targetNodeId: concept-gen
-    targetPortId: competitor-products
-  - id: c-cfg-sales-scenario-own
-    sourceNodeId: config-params
-    sourcePortId: own-product
-    targetNodeId: sales-scenario
-    targetPortId: own-product
-  - id: c-cfg-sales-scenario-comp
-    sourceNodeId: config-params
-    sourcePortId: competitor-products
-    targetNodeId: sales-scenario
-    targetPortId: competitor-products
-  - id: c-cfg-sales-faq-own
-    sourceNodeId: config-params
-    sourcePortId: own-product
-    targetNodeId: sales-faq
-    targetPortId: own-product
-  - id: c-cfg-sales-faq-comp
-    sourceNodeId: config-params
-    sourcePortId: competitor-products
-    targetNodeId: sales-faq
-    targetPortId: competitor-products
-  - id: c-cfg-sales-greeting-own
-    sourceNodeId: config-params
-    sourcePortId: own-product
-    targetNodeId: sales-greeting
-    targetPortId: own-product
-  - id: c-cfg-sales-greeting-comp
-    sourceNodeId: config-params
-    sourcePortId: competitor-products
-    targetNodeId: sales-greeting
     targetPortId: competitor-products
 
   # ── input-data → why-analysis ──
@@ -832,99 +407,1134 @@ connections:
     targetNodeId: who-analysis
     targetPortId: what-result
 
-  # ── Why/What/Who → コンセプト生成 ──
-  - id: c-why-concept-trigger
-    sourceNodeId: why-analysis
-    sourcePortId: triggers
-    targetNodeId: concept-gen
-    targetPortId: trigger
-  - id: c-why-concept-result
-    sourceNodeId: why-analysis
-    sourcePortId: why-result
-    targetNodeId: concept-gen
-    targetPortId: why-result
-  - id: c-what-concept
-    sourceNodeId: what-analysis
-    sourcePortId: what-result
-    targetNodeId: concept-gen
-    targetPortId: what-result
-  - id: c-who-concept
-    sourceNodeId: who-analysis
-    sourcePortId: who-result
-    targetNodeId: concept-gen
-    targetPortId: who-result
+variants:
+  # ══════════════════════════════════════════════════
+  # Variant 1: NA0K（ヘアドライヤー）サイトストーリー生成
+  # ══════════════════════════════════════════════════
+  - id: na0k-story-flow
+    name: ヘアドライヤー（NA0K）サイトストーリー生成
+    conditions:
+      product-type: na0k
+    addSteps:
+      # ── 構成案（Why重視 Ver） ──
+      - id: story-why-ver
+        name: 構成案（Why重視 Ver）
+        category: llm
+        summary: Why分析結果を重視したサイトストーリー構成案を生成
+        description: |
+          「なぜこの製品を選ぶべきか」という合理的な理由を軸に構成案を生成する。
+          他社比較やコスト換算を用いて長期的・経済的なメリットを論理的に提示し、
+          高価格帯製品への心理的障壁を取り払う構成を目指す。
+        inputs:
+          - id: why-result
+            label: Why分析結果
+            dataType: html
+            description: Why分析の出力（Job/ペインポイント/トリガー）
+            required: true
+          - id: what-result
+            label: What分析結果
+            dataType: html
+            description: What分析の出力（USP/差別化/ベネフィット）
+            required: true
+          - id: who-result
+            label: Who分析結果
+            dataType: html
+            description: Who分析の出力（顧客像/利用シーン）
+            required: true
+          - id: promo-site
+            label: 商品プロモ現行サイト
+            dataType: json
+            description: 商品プロモ検討会の資料内「Webサイト構成案」
+            required: true
+          - id: current-site
+            label: 現行サイト
+            dataType: html
+            description: 現行製品サイトデータ
+            required: true
+        outputs:
+          - id: story-draft
+            label: 構成案（Why Ver）
+            dataType: html
+            description: Why重視のストーリー構成案
+        artifacts:
+          - type: output
+            label: アウトプット（HTML）
+            url: /artifacts/na0k/story-why-ver.html
+        metadata:
+          output_name: 構成案（Why重視軸 Ver）
 
-  # ── コンセプト → コピー ──
-  - id: c-concept-copy
-    sourceNodeId: concept-gen
-    sourcePortId: concept
-    targetNodeId: copy-gen
-    targetPortId: concept
-  - id: c-why-copy-trigger
-    sourceNodeId: why-analysis
-    sourcePortId: triggers
-    targetNodeId: copy-gen
-    targetPortId: trigger
-  - id: c-why-copy-result
-    sourceNodeId: why-analysis
-    sourcePortId: why-result
-    targetNodeId: copy-gen
-    targetPortId: why-result
-  - id: c-what-copy
-    sourceNodeId: what-analysis
-    sourcePortId: what-result
-    targetNodeId: copy-gen
-    targetPortId: what-result
-  - id: c-who-copy
-    sourceNodeId: who-analysis
-    sourcePortId: who-result
-    targetNodeId: copy-gen
-    targetPortId: who-result
+      # ── 構成案（What重視 Ver） ──
+      - id: story-what-ver
+        name: 構成案（What重視 Ver）
+        category: llm
+        summary: What分析結果を重視したサイトストーリー構成案を生成
+        description: |
+          製品の機能（スペック）と具体的な利便性を中心に構成案を生成する。
+          技術的根拠や多彩なモード、具体的な使用方法、FAQなどを網羅的に提示し、
+          製品の高性能さと信頼性を納得させる構成を目指す。
+        inputs:
+          - id: why-result
+            label: Why分析結果
+            dataType: html
+            description: Why分析の出力
+            required: true
+          - id: what-result
+            label: What分析結果
+            dataType: html
+            description: What分析の出力
+            required: true
+          - id: who-result
+            label: Who分析結果
+            dataType: html
+            description: Who分析の出力
+            required: true
+          - id: promo-site
+            label: 商品プロモ現行サイト
+            dataType: json
+            description: 商品プロモ検討会の資料内「Webサイト構成案」
+            required: true
+          - id: current-site
+            label: 現行サイト
+            dataType: html
+            description: 現行製品サイトデータ
+            required: true
+        outputs:
+          - id: story-draft
+            label: 構成案（What Ver）
+            dataType: html
+            description: What重視のストーリー構成案
+        artifacts:
+          - type: output
+            label: アウトプット（HTML）
+            url: /artifacts/na0k/story-what-ver.html
+        metadata:
+          output_name: 構成案（What重視軸 Ver）
 
-  # ── Why → セールストーク3種 ──
-  - id: c-why-sales-scenario
-    sourceNodeId: why-analysis
-    sourcePortId: why-result
-    targetNodeId: sales-scenario
-    targetPortId: why-result
-  - id: c-why-sales-faq
-    sourceNodeId: why-analysis
-    sourcePortId: why-result
-    targetNodeId: sales-faq
-    targetPortId: why-result
-  - id: c-why-sales-greeting
-    sourceNodeId: why-analysis
-    sourcePortId: why-result
-    targetNodeId: sales-greeting
-    targetPortId: why-result
+      # ── 構成案（Who重視 Ver） ──
+      - id: story-who-ver
+        name: 構成案（Who重視 Ver）
+        category: llm
+        summary: Who分析結果を重視したサイトストーリー構成案を生成
+        description: |
+          ユーザーのライフスタイルや感情の変化にフォーカスし、
+          ストーリー形式で製品価値を伝える構成案を生成する。
+          「これは自分のための製品だ」という強い共感を生む構成を目指す。
+        inputs:
+          - id: why-result
+            label: Why分析結果
+            dataType: html
+            description: Why分析の出力
+            required: true
+          - id: what-result
+            label: What分析結果
+            dataType: html
+            description: What分析の出力
+            required: true
+          - id: who-result
+            label: Who分析結果
+            dataType: html
+            description: Who分析の出力
+            required: true
+          - id: promo-site
+            label: 商品プロモ現行サイト
+            dataType: json
+            description: 商品プロモ検討会の資料内「Webサイト構成案」
+            required: true
+          - id: current-site
+            label: 現行サイト
+            dataType: html
+            description: 現行製品サイトデータ
+            required: true
+        outputs:
+          - id: story-draft
+            label: 構成案（Who Ver）
+            dataType: html
+            description: Who重視のストーリー構成案
+        artifacts:
+          - type: output
+            label: アウトプット（HTML）
+            url: /artifacts/na0k/story-who-ver.html
+        metadata:
+          output_name: 構成案（Who重視軸 Ver）
 
-  # ── Why/What → 接客ストーリー STEP1 ──
-  - id: c-why-story1
-    sourceNodeId: why-analysis
-    sourcePortId: why-result
-    targetNodeId: story-step1
-    targetPortId: why-result
-  - id: c-what-story1
-    sourceNodeId: what-analysis
-    sourcePortId: what-result
-    targetNodeId: story-step1
-    targetPortId: what-result
+      # ── ハルシネーションチェック x3 ──
+      - id: hallcheck-why
+        name: ハルシネーションチェック（Why Ver）
+        category: llm
+        summary: Why重視構成案を現行サイトと照合してファクトチェック
+        description: |
+          Why重視構成案の内容を現行サイトの情報と照合し、
+          事実と異なる記述やハルシネーションがないかチェックする。
+        inputs:
+          - id: story-draft
+            label: 構成案
+            dataType: html
+            description: チェック対象の構成案
+            required: true
+          - id: current-site
+            label: 現行サイト
+            dataType: html
+            description: ファクトチェック用の正解データ
+            required: true
+        outputs:
+          - id: checked-story
+            label: チェック済構成案
+            dataType: html
+            description: ハルシネーションチェック済の構成案
 
-  # ── STEP1 → STEP2 ──
-  - id: c-story1-story2
-    sourceNodeId: story-step1
-    sourcePortId: pain-usp-table
-    targetNodeId: story-step2
-    targetPortId: pain-usp-table
-  - id: c-why-story2
-    sourceNodeId: why-analysis
-    sourcePortId: why-result
-    targetNodeId: story-step2
-    targetPortId: why-result
-  - id: c-what-story2
-    sourceNodeId: what-analysis
-    sourcePortId: what-result
-    targetNodeId: story-step2
-    targetPortId: what-result
+      - id: hallcheck-what
+        name: ハルシネーションチェック（What Ver）
+        category: llm
+        summary: What重視構成案を現行サイトと照合してファクトチェック
+        description: |
+          What重視構成案の内容を現行サイトの情報と照合し、
+          事実と異なる記述やハルシネーションがないかチェックする。
+        inputs:
+          - id: story-draft
+            label: 構成案
+            dataType: html
+            description: チェック対象の構成案
+            required: true
+          - id: current-site
+            label: 現行サイト
+            dataType: html
+            description: ファクトチェック用の正解データ
+            required: true
+        outputs:
+          - id: checked-story
+            label: チェック済構成案
+            dataType: html
+            description: ハルシネーションチェック済の構成案
 
-variants: []
+      - id: hallcheck-who
+        name: ハルシネーションチェック（Who Ver）
+        category: llm
+        summary: Who重視構成案を現行サイトと照合してファクトチェック
+        description: |
+          Who重視構成案の内容を現行サイトの情報と照合し、
+          事実と異なる記述やハルシネーションがないかチェックする。
+        inputs:
+          - id: story-draft
+            label: 構成案
+            dataType: html
+            description: チェック対象の構成案
+            required: true
+          - id: current-site
+            label: 現行サイト
+            dataType: html
+            description: ファクトチェック用の正解データ
+            required: true
+        outputs:
+          - id: checked-story
+            label: チェック済構成案
+            dataType: html
+            description: ハルシネーションチェック済の構成案
+
+      # ── 各セクションに統合 ──
+      - id: section-integrate
+        name: 各セクションに統合
+        category: llm
+        summary: 3つのチェック済構成案をセクション構成に統合
+        description: |
+          Why/What/Who各重視バージョンのチェック済構成案を、
+          セクション一覧に沿って統合し比較一覧を作成する。
+          各案の記述の有無、数値の差異、表現のトーンの違いをハイライト付きで集約。
+          統合の選定は生成AIを使わず3社で協議の上決定する。
+        inputs:
+          - id: checked-why
+            label: チェック済（Why Ver）
+            dataType: html
+            description: ハルシネーションチェック済のWhy重視構成案
+            required: true
+          - id: checked-what
+            label: チェック済（What Ver）
+            dataType: html
+            description: ハルシネーションチェック済のWhat重視構成案
+            required: true
+          - id: checked-who
+            label: チェック済（Who Ver）
+            dataType: html
+            description: ハルシネーションチェック済のWho重視構成案
+            required: true
+          - id: section-list
+            label: セクション一覧
+            dataType: json
+            description: サイトのセクション構成一覧（15セクション）
+            required: true
+        outputs:
+          - id: integrated-story
+            label: セクション統合ストーリー
+            dataType: html
+            description: セクション別に統合されたストーリー
+        artifacts:
+          - type: output
+            label: アウトプット（HTML）
+            url: /artifacts/na0k/section-integrate.html
+
+      # ── 最終版ストーリー ──
+      - id: final-story
+        name: 最終版ストーリー
+        category: output
+        summary: 統合結果から最終版サイトストーリーを出力
+        description: |
+          3社協議の上確定したセクションの内容に基づき、一つのストーリーとして出力する。
+        inputs:
+          - id: integrated-story
+            label: セクション統合ストーリー
+            dataType: html
+            description: 統合済みのストーリー
+            required: true
+        outputs:
+          - id: final-output
+            label: 最終版ストーリー
+            dataType: html
+            description: 最終版サイトストーリー（HTML形式）
+        artifacts:
+          - type: output
+            label: アウトプット（HTML）
+            url: /artifacts/na0k/final-story.html
+
+    addConnections:
+      # ── 分析結果 → 構成案（Why Ver） ──
+      - id: v1-why-story-why
+        sourceNodeId: why-analysis
+        sourcePortId: why-result
+        targetNodeId: story-why-ver
+        targetPortId: why-result
+      - id: v1-what-story-why
+        sourceNodeId: what-analysis
+        sourcePortId: what-result
+        targetNodeId: story-why-ver
+        targetPortId: what-result
+      - id: v1-who-story-why
+        sourceNodeId: who-analysis
+        sourcePortId: who-result
+        targetNodeId: story-why-ver
+        targetPortId: who-result
+      - id: v1-promo-story-why
+        sourceNodeId: story-input-data
+        sourcePortId: promo-site
+        targetNodeId: story-why-ver
+        targetPortId: promo-site
+      - id: v1-site-story-why
+        sourceNodeId: story-input-data
+        sourcePortId: current-site
+        targetNodeId: story-why-ver
+        targetPortId: current-site
+
+      # ── 分析結果 → 構成案（What Ver） ──
+      - id: v1-why-story-what
+        sourceNodeId: why-analysis
+        sourcePortId: why-result
+        targetNodeId: story-what-ver
+        targetPortId: why-result
+      - id: v1-what-story-what
+        sourceNodeId: what-analysis
+        sourcePortId: what-result
+        targetNodeId: story-what-ver
+        targetPortId: what-result
+      - id: v1-who-story-what
+        sourceNodeId: who-analysis
+        sourcePortId: who-result
+        targetNodeId: story-what-ver
+        targetPortId: who-result
+      - id: v1-promo-story-what
+        sourceNodeId: story-input-data
+        sourcePortId: promo-site
+        targetNodeId: story-what-ver
+        targetPortId: promo-site
+      - id: v1-site-story-what
+        sourceNodeId: story-input-data
+        sourcePortId: current-site
+        targetNodeId: story-what-ver
+        targetPortId: current-site
+
+      # ── 分析結果 → 構成案（Who Ver） ──
+      - id: v1-why-story-who
+        sourceNodeId: why-analysis
+        sourcePortId: why-result
+        targetNodeId: story-who-ver
+        targetPortId: why-result
+      - id: v1-what-story-who
+        sourceNodeId: what-analysis
+        sourcePortId: what-result
+        targetNodeId: story-who-ver
+        targetPortId: what-result
+      - id: v1-who-story-who
+        sourceNodeId: who-analysis
+        sourcePortId: who-result
+        targetNodeId: story-who-ver
+        targetPortId: who-result
+      - id: v1-promo-story-who
+        sourceNodeId: story-input-data
+        sourcePortId: promo-site
+        targetNodeId: story-who-ver
+        targetPortId: promo-site
+      - id: v1-site-story-who
+        sourceNodeId: story-input-data
+        sourcePortId: current-site
+        targetNodeId: story-who-ver
+        targetPortId: current-site
+
+      # ── 構成案 → ハルシネーションチェック ──
+      - id: v1-story-why-hallcheck
+        sourceNodeId: story-why-ver
+        sourcePortId: story-draft
+        targetNodeId: hallcheck-why
+        targetPortId: story-draft
+      - id: v1-site-hallcheck-why
+        sourceNodeId: story-input-data
+        sourcePortId: current-site
+        targetNodeId: hallcheck-why
+        targetPortId: current-site
+
+      - id: v1-story-what-hallcheck
+        sourceNodeId: story-what-ver
+        sourcePortId: story-draft
+        targetNodeId: hallcheck-what
+        targetPortId: story-draft
+      - id: v1-site-hallcheck-what
+        sourceNodeId: story-input-data
+        sourcePortId: current-site
+        targetNodeId: hallcheck-what
+        targetPortId: current-site
+
+      - id: v1-story-who-hallcheck
+        sourceNodeId: story-who-ver
+        sourcePortId: story-draft
+        targetNodeId: hallcheck-who
+        targetPortId: story-draft
+      - id: v1-site-hallcheck-who
+        sourceNodeId: story-input-data
+        sourcePortId: current-site
+        targetNodeId: hallcheck-who
+        targetPortId: current-site
+
+      # ── ハルチェック → セクション統合 ──
+      - id: v1-hallcheck-why-integrate
+        sourceNodeId: hallcheck-why
+        sourcePortId: checked-story
+        targetNodeId: section-integrate
+        targetPortId: checked-why
+      - id: v1-hallcheck-what-integrate
+        sourceNodeId: hallcheck-what
+        sourcePortId: checked-story
+        targetNodeId: section-integrate
+        targetPortId: checked-what
+      - id: v1-hallcheck-who-integrate
+        sourceNodeId: hallcheck-who
+        sourcePortId: checked-story
+        targetNodeId: section-integrate
+        targetPortId: checked-who
+      - id: v1-section-list-integrate
+        sourceNodeId: story-input-data
+        sourcePortId: section-list
+        targetNodeId: section-integrate
+        targetPortId: section-list
+
+      # ── セクション統合 → 最終版 ──
+      - id: v1-integrate-final
+        sourceNodeId: section-integrate
+        sourcePortId: integrated-story
+        targetNodeId: final-story
+        targetPortId: integrated-story
+
+  # ══════════════════════════════════════════════════
+  # Variant 2: N510D（炊飯器）サイトストーリー生成
+  # ══════════════════════════════════════════════════
+  - id: n510d-story-flow
+    name: 炊飯器（N510D）サイトストーリー生成
+    conditions:
+      product-type: n510d
+    addSteps:
+      # ── ストーリー（ドライヤー Story Ver） ──
+      - id: story-dryer-ver
+        name: ストーリー（ドライヤー Story Ver）
+        category: llm
+        summary: ドライヤーStoryを参照パターンとしてストーリーを生成
+        description: |
+          ドライヤー(EH-NA0K)の構成やトーンをモデルに、
+          炊飯器(SR-N510D)の分析データを情緒的な価値訴求へ昇華させる。
+          ターゲットの悩み（ペインポイント）への共感から入り、
+          「理想の未来」を提示する構成を構築する。
+        inputs:
+          - id: why-result
+            label: Why分析結果
+            dataType: html
+            description: Why分析の出力
+            required: true
+          - id: what-result
+            label: What分析結果
+            dataType: html
+            description: What分析の出力
+            required: true
+          - id: who-result
+            label: Who分析結果
+            dataType: html
+            description: Who分析の出力
+            required: true
+          - id: dryer-story
+            label: ドライヤーStory
+            dataType: html
+            description: NA0Kの完成版ストーリー（構成・トーン参照用）
+            required: true
+          - id: current-site
+            label: 現行サイト
+            dataType: html
+            description: 現行製品サイトデータ
+            required: true
+        outputs:
+          - id: story-draft
+            label: ストーリー（ドライヤー Ver）
+            dataType: html
+            description: ドライヤーStory参照パターンのストーリー
+        prompt:
+          template: |
+            # Role
+            あなたは世界トップクラスのプロダクトマーケティング・コピーライターであり、Webコンテンツストラテジストです。
+            提供された3つの分析データ（What, Who, Why）に基づき、読者の感情を揺さぶり、購買行動を促す「ストーリーテリング型の商品紹介ページ（LP）」の構成と原稿を作成してください。
+
+            # Input Data
+            以下の3つの分析データを参照してコンテンツを作成してください。
+
+            1. **Whatデータ（製品機能・差別化要因）**:
+            {{what_data}}
+
+            2. **Whoデータ（顧客像・利用シーン）**:
+            {{who_data}}
+
+            3. **Whyデータ（購入動機・インサイト）**:
+            {{why_data}}
+
+            # Output Structure Target
+            参照元となるドライヤーStory（{{dryer_story}}）の構成とトーン＆マナーを模倣します。単なるスペック表ではなく、情緒的な価値訴求を行ってください。
+
+            # Content Requirements & Mapping Instructions
+            以下のセクション構成に従って出力してください。
+
+            ## 1. H1タイトル & キャッチコピー
+            - タイトル: 製品名と簡潔な概要
+            - タグライン: Whyデータの「感情的Job」とWhoデータの「生活変化」を組み合わせた情緒的ベネフィット
+            - サブタイトル: Whatデータの「コアUSP」とWhoデータの「機能的Job」の組み合わせ
+
+            ## 2. ヒーローエリア（ファーストビュー要素）
+            - メインビジュアル案: Whoデータの「利用シナリオ」に基づく提案
+            - メインコピー: 最も強い感情的価値（Whyデータより）
+            - バリュープロポジション: Whatデータの「主要な差別化要素」から3つ
+
+            ## 3. 問題提起（共感セクション）
+            - ターゲットの課題: Whyデータの「ペインポイント」とWhoデータの「心理的特性」
+            - 理想と現実のギャップ
+
+            ## 4. 製品紹介（解決策の提示）
+            - 解決宣言 + 主要機能と価値（4つのFeature Box）
+
+            ## 5. デザイン & テクノロジー
+            ## 6. 使用シーン（Whoの具体化）
+            ## 7. ベネフィット比較と長期的価値
+            ## 8. ユーザーの声（社会的証明）
+            ## 9. FAQ & CTA
+
+            # Formatting Rules
+            - トーン＆マナー: 専門的でありながら親しみやすく、共感的
+            - 出力形式: HTMLタグは使用せず、Markdown形式で出力
+          variables:
+            - name: what_data
+              source: what-analysis.what-result
+              description: What分析結果（製品機能・差別化要因）
+            - name: who_data
+              source: who-analysis.who-result
+              description: Who分析結果（顧客像・利用シーン）
+            - name: why_data
+              source: why-analysis.why-result
+              description: Why分析結果（購入動機・インサイト）
+            - name: dryer_story
+              source: story-input-data.dryer-story
+              description: ドライヤーStory（構成・トーン参照元）
+        artifacts:
+          - type: prompt
+            label: プロンプト
+            url: /artifacts/n510d/story-dryer-ver-prompt.txt
+          - type: output
+            label: アウトプット（HTML）
+            url: /artifacts/n510d/story-dryer-ver.html
+        metadata:
+          output_name: ストーリー（ドライヤーStory Ver）
+
+      # ── ストーリー（PIM Ver） ──
+      - id: story-pim-ver
+        name: ストーリー（PIM Ver）
+        category: llm
+        summary: PIM情報を主軸にストーリーを生成
+        description: |
+          PIM（公式スペック）と顧客理解(What/Who/Why)を組み合わせ、
+          感情的な共感から技術的な納得へつなげるストーリーテリング型LPを生成する。
+          用語の正確性と顧客インサイトへの訴求を両立させる。
+        inputs:
+          - id: why-result
+            label: Why分析結果
+            dataType: html
+            description: Why分析の出力
+            required: true
+          - id: what-result
+            label: What分析結果
+            dataType: html
+            description: What分析の出力
+            required: true
+          - id: who-result
+            label: Who分析結果
+            dataType: html
+            description: Who分析の出力
+            required: true
+          - id: pim-data
+            label: PIM情報
+            dataType: json
+            description: Product Information Management データ
+            required: true
+          - id: dryer-story
+            label: ドライヤーStory
+            dataType: html
+            description: NA0Kの完成版ストーリー（構成参照用）
+            required: true
+          - id: current-site
+            label: 現行サイト
+            dataType: html
+            description: 現行製品サイトデータ
+            required: true
+        outputs:
+          - id: story-draft
+            label: ストーリー（PIM Ver）
+            dataType: html
+            description: PIM情報主軸のストーリー
+        prompt:
+          template: |
+            # Role
+            あなたは、大手家電メーカーのWebコンテンツ制作責任者兼、敏腕セールスライターです。
+            公式スペック情報（PIM）の正確さと、マーケティング分析データ（What/Who/Why）に基づいた顧客心理への訴求を両立させた、高品質な「ストーリーテリング型ランディングページ（LP）」の構成案を作成してください。
+
+            # Input Data
+            以下の4つのデータを参照してコンテンツを作成してください。
+
+            1. **PIMデータ（公式情報・用語・スペック）**:
+            {{pim_data}}
+
+            2. **Whatデータ（機能的価値・競合比較）**:
+            {{what_data}}
+
+            3. **Whoデータ（ターゲット・利用シーン）**:
+            {{who_data}}
+
+            4. **Whyデータ（インサイト・購入動機）**:
+            {{why_data}}
+
+            # Output Strategy
+            「感情的な共感から入り、技術的な納得感でクロージングする」構成を目指します。
+
+            **【重要：情報の使い分けルール】**
+            * 用語・機能名: 必ずPIMデータの正確な表記を使用する
+            * 訴求内容・文脈: Whyデータの「悩み」やWhoデータの「利用シーン」と紐づけて語る
+            * 強みの補強: Whatデータにある競合優位性をPIM情報の補足として盛り込む
+
+            # Content Structure
+            ## 1. ヘッダーエリア（H1タイトル + メインキャッチ + サブキャッチ）
+            ## 2. ヒーロービジュアルの提案
+            ## 3. 共感ストーリー（導入）
+            ## 4. ソリューション（Feature 1-3）
+            ## 5. テクニカル・ディープダイブ
+            ## 6. ライフスタイル提案（Who）
+            ## 7. 信頼と実績（Social Proof + Q&A）
+            ## 8. クロージング (CTA)
+
+            # Tone & Manner
+            - 信頼感: メーカー公式としての品格を保つ
+            - 共感性: ユーザーの生活に寄り添う温かみ
+            - 明快さ: 専門用語は使いつつ、ベネフィットは直感的に伝わるように
+          variables:
+            - name: pim_data
+              source: story-input-data.pim-data
+              description: PIM情報（公式スペック・用語）
+            - name: what_data
+              source: what-analysis.what-result
+              description: What分析結果（機能的価値・競合比較）
+            - name: who_data
+              source: who-analysis.who-result
+              description: Who分析結果（ターゲット・利用シーン）
+            - name: why_data
+              source: why-analysis.why-result
+              description: Why分析結果（インサイト・購入動機）
+        artifacts:
+          - type: prompt
+            label: プロンプト
+            url: /artifacts/n510d/story-pim-ver-prompt.txt
+          - type: output
+            label: アウトプット（HTML）
+            url: /artifacts/n510d/story-pim-ver.html
+        metadata:
+          output_name: ストーリー（PIM Ver）
+
+      # ── ストーリー（現行サイト Ver） ──
+      - id: story-site-ver
+        name: ストーリー（現行サイト Ver）
+        category: llm
+        summary: 現行サイトを主軸にストーリーを生成
+        description: |
+          現行サイトの情報設計をベースに、キャッチコピーの刷新やビジュアル指示の追加、
+          実証データの強調を行い、Webページとして直感的に魅力が伝わるレイアウトに再構成する。
+        inputs:
+          - id: why-result
+            label: Why分析結果
+            dataType: html
+            description: Why分析の出力
+            required: true
+          - id: what-result
+            label: What分析結果
+            dataType: html
+            description: What分析の出力
+            required: true
+          - id: who-result
+            label: Who分析結果
+            dataType: html
+            description: Who分析の出力
+            required: true
+          - id: current-site
+            label: 現行サイト
+            dataType: html
+            description: 現行製品サイトデータ（主軸）
+            required: true
+          - id: dryer-story
+            label: ドライヤーStory
+            dataType: html
+            description: NA0Kの完成版ストーリー（トーン参照用）
+            required: true
+        outputs:
+          - id: story-draft
+            label: ストーリー（現行サイト Ver）
+            dataType: html
+            description: 現行サイト主軸のストーリー
+        artifacts:
+          - type: output
+            label: アウトプット（HTML）
+            url: /artifacts/n510d/story-site-ver.html
+        metadata:
+          output_name: ストーリー（現行サイト Ver）
+
+      # ── ハルシネーションチェック x3 ──
+      - id: hallcheck-dryer
+        name: ハルシネーションチェック（ドライヤー Ver）
+        category: llm
+        summary: ドライヤーVerストーリーを現行サイトと照合してファクトチェック
+        description: |
+          ドライヤーStory参照パターンのストーリーを現行サイトと照合し、
+          事実と異なる記述やハルシネーションがないかチェックする。
+        inputs:
+          - id: story-draft
+            label: ストーリー
+            dataType: html
+            description: チェック対象のストーリー
+            required: true
+          - id: current-site
+            label: 現行サイト
+            dataType: html
+            description: ファクトチェック用の正解データ
+            required: true
+        outputs:
+          - id: checked-story
+            label: チェック済ストーリー
+            dataType: html
+            description: ハルシネーションチェック済のストーリー
+
+      - id: hallcheck-pim
+        name: ハルシネーションチェック（PIM Ver）
+        category: llm
+        summary: PIM Verストーリーを現行サイトと照合してファクトチェック
+        description: |
+          PIM情報主軸ストーリーを現行サイトと照合し、
+          事実と異なる記述やハルシネーションがないかチェックする。
+        inputs:
+          - id: story-draft
+            label: ストーリー
+            dataType: html
+            description: チェック対象のストーリー
+            required: true
+          - id: current-site
+            label: 現行サイト
+            dataType: html
+            description: ファクトチェック用の正解データ
+            required: true
+        outputs:
+          - id: checked-story
+            label: チェック済ストーリー
+            dataType: html
+            description: ハルシネーションチェック済のストーリー
+
+      - id: hallcheck-site
+        name: ハルシネーションチェック（現行サイト Ver）
+        category: llm
+        summary: 現行サイトVerストーリーをファクトチェック
+        description: |
+          現行サイト主軸ストーリーを現行サイトと照合し、
+          事実と異なる記述やハルシネーションがないかチェックする。
+        inputs:
+          - id: story-draft
+            label: ストーリー
+            dataType: html
+            description: チェック対象のストーリー
+            required: true
+          - id: current-site
+            label: 現行サイト
+            dataType: html
+            description: ファクトチェック用の正解データ
+            required: true
+        outputs:
+          - id: checked-story
+            label: チェック済ストーリー
+            dataType: html
+            description: ハルシネーションチェック済のストーリー
+
+      # ── 比較分析 ──
+      - id: comparative-analysis
+        name: 比較分析
+        category: llm
+        summary: 3種のチェック済ストーリーを多角的に比較・評価
+        description: |
+          3種のチェック済ストーリーと元のストーリー、現行サイトを入力として比較分析を行う。
+          Good（良い点）、Improve（改善点）、Fact Check（事実誤認の確認）の観点で評価し、
+          各案の優れた要素を論理的に統合した「最強の統合案」を策定する。
+        inputs:
+          - id: checked-dryer
+            label: チェック済（ドライヤー Ver）
+            dataType: html
+            description: チェック済のドライヤーVerストーリー
+            required: true
+          - id: checked-pim
+            label: チェック済（PIM Ver）
+            dataType: html
+            description: チェック済のPIM Verストーリー
+            required: true
+          - id: checked-site
+            label: チェック済（現行サイト Ver）
+            dataType: html
+            description: チェック済の現行サイトVerストーリー
+            required: true
+          - id: current-site
+            label: 現行サイト
+            dataType: html
+            description: 比較基準の現行サイトデータ
+            required: true
+        outputs:
+          - id: analysis-result
+            label: 比較分析結果
+            dataType: html
+            description: 3種ストーリーの比較分析結果と統合案
+        prompt:
+          template: |
+            Webサイト構成案 比較分析プロンプト
+            あなたは熟練したWebマーケター、UXリサーチャー、およびコピーライターです。
+            以下の入力情報に基づき、「現行のWebサイト」と「新しい構成案（複数）」を比較分析し、最適なWebサイト構成を導き出すためのレポートを作成してください。
+
+            ■ 入力情報
+            1. 現行のWebサイト情報 (Current Status)
+            {{current_site}}
+
+            2. 新構成案 A (Proposal A)
+            {{proposal_a}}
+
+            3. 新構成案 B (Proposal B)
+            {{proposal_b}}
+
+            4. 新構成案 C (Proposal C)
+            {{proposal_c}}
+
+            ■ 分析指示 (Instructions)
+            Step 1: 現行サイトの課題抽出
+            - 現行サイトが「機能的価値（スペック）」と「情緒的価値（ベネフィット）」のどちらに偏っているか分析
+            - 購買意欲を削いでいるボトルネック（情報の欠落、共感の欠如など）を特定
+
+            Step 2: 各構成案の比較評価
+            - Good (良い点): ターゲットインサイトへの刺さり具合、USPの表現、UI/UX
+            - Improve (改善点・懸念点): 説明不足、情緒過多、論理の飛躍など
+            - Fact Check (重要): 現行サイトのスペック情報と照らし合わせ、事実誤認がないか厳密にチェック
+
+            Step 3: 最終推奨案の策定（ハイブリッド提案）
+            - 最もベースとして優れている案を選定し、他案の優れた要素を取り込んだ「統合ハイブリッド案」を提案
+            - なぜその組み合わせが最強なのか、根拠を論理的に説明
+
+            ■ 出力形式: HTML形式（インラインCSS付き）
+            ■ 出力言語: 日本語
+          variables:
+            - name: current_site
+              source: story-input-data.current-site
+              description: 現行Webサイト情報
+            - name: proposal_a
+              source: hallcheck-dryer.checked-story
+              description: 構成案A（ドライヤー Story Ver チェック済）
+            - name: proposal_b
+              source: hallcheck-pim.checked-story
+              description: 構成案B（PIM Ver チェック済）
+            - name: proposal_c
+              source: hallcheck-site.checked-story
+              description: 構成案C（現行サイト Ver チェック済）
+        artifacts:
+          - type: prompt
+            label: プロンプト
+            url: /artifacts/n510d/comparative-analysis-prompt.txt
+          - type: output
+            label: アウトプット（HTML）
+            url: /artifacts/n510d/comparative-analysis.html
+
+      # ── 最終版ストーリー ──
+      - id: final-story-n510d
+        name: 最終版ストーリー
+        category: output
+        summary: 比較分析結果と3構成案を統合して最終ストーリーを生成
+        description: |
+          3つの構成案（A:情緒, B:実利, C:Web骨子）と比較分析結果を統合し、
+          最終決定版のWebサイト原稿をHTML形式で出力する。
+          C案をベース骨子に、A案の情緒・共感要素とB案の実利データを統合する。
+        inputs:
+          - id: story-a
+            label: 構成案A（ドライヤー Story Ver）
+            dataType: html
+            description: 情緒・共感要素の参照元
+            required: true
+          - id: story-b
+            label: 構成案B（PIM Ver）
+            dataType: html
+            description: 数値データ・実利要素の参照元
+            required: true
+          - id: story-c
+            label: 構成案C（現行サイト Ver）
+            dataType: html
+            description: Web骨子・構造のベース
+            required: true
+          - id: analysis-result
+            label: 比較分析結果
+            dataType: html
+            description: 3種ストーリーの比較分析結果と統合案
+            required: true
+          - id: section-list
+            label: セクション一覧
+            dataType: json
+            description: サイトのセクション構成一覧（7セクション）
+            required: true
+        outputs:
+          - id: final-output
+            label: 最終版ストーリー
+            dataType: html
+            description: 最終版サイトストーリー（HTML形式）
+        prompt:
+          template: |
+            あなたは熟練のWebコピーライター兼UIデザイナーです。
+            Panasonicの炊飯器「SR-N510D」のWebサイトリニューアルに向け、3つの構成案（A, B, C）を統合した最終決定版のWebサイト原稿を、1つのHTMLファイルとして出力してください。
+
+            # 参照ファイルと役割
+            - ベース（骨子）: {{story_c}}（C案）— Webサイトとしての読みやすさ、見出し階層、ビジュアル指示の形式を維持
+            - 情緒・共感要素: {{story_a}}（A案）— キャッチコピーの温度感、問題提起、競合比較テーブル
+            - 解決策・実利要素: {{story_b}}（B案）— 数値データ、お手入れ訴求、メカニズム解説
+
+            # 統合指示（セクションごとの構成ルール）
+            {{compare_result}} の「最終推奨案 (The Hybrid Proposal)」に従い、以下のフローで構成:
+
+            1. Hero Area (FV): C案のビジュアル指示 + A案のメインコピー + C案のサブコピー
+            2. Introduction (共感): A案の共感パート
+            3. USP 1 (美味しさ): C案構造 + B案の数値データとメカニズム解説
+            4. USP 2 (お手入れ): C案ベース + B案の「洗うのは2点」「食洗機対応」を強調
+            5. Lifestyle (使用シーン): C案の3シーン
+            6. Comparison (納得感): A案の比較テーブル
+            7. Specs & CTA: C案のスペック表とCTA
+
+            # 出力形式
+            - 単一のHTMLファイル（インラインCSS付き）
+            - ビジュアル指示（Visual Instruction）はC案のスタイルを踏襲
+          variables:
+            - name: story_a
+              source: story-dryer-ver.story-draft
+              description: 構成案A（ドライヤー Story Ver）— 情緒・共感要素
+            - name: story_b
+              source: story-pim-ver.story-draft
+              description: 構成案B（PIM Ver）— 実利・数値データ
+            - name: story_c
+              source: story-site-ver.story-draft
+              description: 構成案C（現行サイト Ver）— Web骨子
+            - name: compare_result
+              source: comparative-analysis.analysis-result
+              description: 比較分析結果（統合推奨案）
+        artifacts:
+          - type: prompt
+            label: プロンプト
+            url: /artifacts/n510d/final-story-prompt.txt
+          - type: output
+            label: アウトプット（HTML）
+            url: /artifacts/n510d/final-story.html
+
+    addConnections:
+      # ── 分析結果 → ストーリー（ドライヤー Ver） ──
+      - id: v2-why-story-dryer
+        sourceNodeId: why-analysis
+        sourcePortId: why-result
+        targetNodeId: story-dryer-ver
+        targetPortId: why-result
+      - id: v2-what-story-dryer
+        sourceNodeId: what-analysis
+        sourcePortId: what-result
+        targetNodeId: story-dryer-ver
+        targetPortId: what-result
+      - id: v2-who-story-dryer
+        sourceNodeId: who-analysis
+        sourcePortId: who-result
+        targetNodeId: story-dryer-ver
+        targetPortId: who-result
+      - id: v2-dryerstory-story-dryer
+        sourceNodeId: story-input-data
+        sourcePortId: dryer-story
+        targetNodeId: story-dryer-ver
+        targetPortId: dryer-story
+      - id: v2-site-story-dryer
+        sourceNodeId: story-input-data
+        sourcePortId: current-site
+        targetNodeId: story-dryer-ver
+        targetPortId: current-site
+
+      # ── 分析結果 → ストーリー（PIM Ver） ──
+      - id: v2-why-story-pim
+        sourceNodeId: why-analysis
+        sourcePortId: why-result
+        targetNodeId: story-pim-ver
+        targetPortId: why-result
+      - id: v2-what-story-pim
+        sourceNodeId: what-analysis
+        sourcePortId: what-result
+        targetNodeId: story-pim-ver
+        targetPortId: what-result
+      - id: v2-who-story-pim
+        sourceNodeId: who-analysis
+        sourcePortId: who-result
+        targetNodeId: story-pim-ver
+        targetPortId: who-result
+      - id: v2-pim-story-pim
+        sourceNodeId: story-input-data
+        sourcePortId: pim-data
+        targetNodeId: story-pim-ver
+        targetPortId: pim-data
+      - id: v2-dryerstory-story-pim
+        sourceNodeId: story-input-data
+        sourcePortId: dryer-story
+        targetNodeId: story-pim-ver
+        targetPortId: dryer-story
+      - id: v2-site-story-pim
+        sourceNodeId: story-input-data
+        sourcePortId: current-site
+        targetNodeId: story-pim-ver
+        targetPortId: current-site
+
+      # ── 分析結果 → ストーリー（現行サイト Ver） ──
+      - id: v2-why-story-site
+        sourceNodeId: why-analysis
+        sourcePortId: why-result
+        targetNodeId: story-site-ver
+        targetPortId: why-result
+      - id: v2-what-story-site
+        sourceNodeId: what-analysis
+        sourcePortId: what-result
+        targetNodeId: story-site-ver
+        targetPortId: what-result
+      - id: v2-who-story-site
+        sourceNodeId: who-analysis
+        sourcePortId: who-result
+        targetNodeId: story-site-ver
+        targetPortId: who-result
+      - id: v2-site-story-site
+        sourceNodeId: story-input-data
+        sourcePortId: current-site
+        targetNodeId: story-site-ver
+        targetPortId: current-site
+      - id: v2-dryerstory-story-site
+        sourceNodeId: story-input-data
+        sourcePortId: dryer-story
+        targetNodeId: story-site-ver
+        targetPortId: dryer-story
+
+      # ── ストーリー → ハルシネーションチェック ──
+      - id: v2-story-dryer-hallcheck
+        sourceNodeId: story-dryer-ver
+        sourcePortId: story-draft
+        targetNodeId: hallcheck-dryer
+        targetPortId: story-draft
+      - id: v2-site-hallcheck-dryer
+        sourceNodeId: story-input-data
+        sourcePortId: current-site
+        targetNodeId: hallcheck-dryer
+        targetPortId: current-site
+
+      - id: v2-story-pim-hallcheck
+        sourceNodeId: story-pim-ver
+        sourcePortId: story-draft
+        targetNodeId: hallcheck-pim
+        targetPortId: story-draft
+      - id: v2-site-hallcheck-pim
+        sourceNodeId: story-input-data
+        sourcePortId: current-site
+        targetNodeId: hallcheck-pim
+        targetPortId: current-site
+
+      - id: v2-story-site-hallcheck
+        sourceNodeId: story-site-ver
+        sourcePortId: story-draft
+        targetNodeId: hallcheck-site
+        targetPortId: story-draft
+      - id: v2-site-hallcheck-site
+        sourceNodeId: story-input-data
+        sourcePortId: current-site
+        targetNodeId: hallcheck-site
+        targetPortId: current-site
+
+      # ── ハルチェック → 比較分析 ──
+      - id: v2-hallcheck-dryer-compare
+        sourceNodeId: hallcheck-dryer
+        sourcePortId: checked-story
+        targetNodeId: comparative-analysis
+        targetPortId: checked-dryer
+      - id: v2-hallcheck-pim-compare
+        sourceNodeId: hallcheck-pim
+        sourcePortId: checked-story
+        targetNodeId: comparative-analysis
+        targetPortId: checked-pim
+      - id: v2-hallcheck-site-compare
+        sourceNodeId: hallcheck-site
+        sourcePortId: checked-story
+        targetNodeId: comparative-analysis
+        targetPortId: checked-site
+      - id: v2-site-compare
+        sourceNodeId: story-input-data
+        sourcePortId: current-site
+        targetNodeId: comparative-analysis
+        targetPortId: current-site
+
+      # ── ストーリー原稿 → 最終版（3案直接入力） ──
+      - id: v2-story-a-final
+        sourceNodeId: story-dryer-ver
+        sourcePortId: story-draft
+        targetNodeId: final-story-n510d
+        targetPortId: story-a
+      - id: v2-story-b-final
+        sourceNodeId: story-pim-ver
+        sourcePortId: story-draft
+        targetNodeId: final-story-n510d
+        targetPortId: story-b
+      - id: v2-story-c-final
+        sourceNodeId: story-site-ver
+        sourcePortId: story-draft
+        targetNodeId: final-story-n510d
+        targetPortId: story-c
+
+      # ── 比較分析 → 最終版 ──
+      - id: v2-compare-final
+        sourceNodeId: comparative-analysis
+        sourcePortId: analysis-result
+        targetNodeId: final-story-n510d
+        targetPortId: analysis-result
+      - id: v2-section-final
+        sourceNodeId: story-input-data
+        sourcePortId: section-list
+        targetNodeId: final-story-n510d
+        targetPortId: section-list

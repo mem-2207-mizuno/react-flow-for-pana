@@ -125,6 +125,7 @@ export default function App() {
               onNodeClick={handleNodeClick}
               onNodeHover={handleNodeHover}
               onNodesChange={handleNodesChange}
+              onPaneClick={handleClosePanel}
             />
           </div>
           {selectedStep && (

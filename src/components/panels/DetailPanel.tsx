@@ -93,6 +93,31 @@ export function DetailPanel({ step, allSteps, onClose }: Props) {
           </section>
         )}
 
+        {/* Artifacts */}
+        {step.artifacts && step.artifacts.length > 0 && (
+          <section className="detail-panel__section">
+            <h3 className="detail-panel__section-title">Artifacts</h3>
+            <div className="detail-panel__artifacts">
+              {step.artifacts.map((a) => (
+                <a
+                  key={a.url}
+                  href={a.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="detail-panel__artifact-link"
+                >
+                  <span
+                    className={`detail-panel__artifact-badge detail-panel__artifact-badge--${a.type}`}
+                  >
+                    {a.type}
+                  </span>
+                  {a.label}
+                </a>
+              ))}
+            </div>
+          </section>
+        )}
+
         {/* Prompt */}
         {step.prompt && (
           <section className="detail-panel__section">

@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="ja">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Panasonic SR-N510D Product Page Spec (Corrected)</title>
+        <style>
+            /* 基本設定 */
+            body {
+                font-family: "Helvetica Neue", "Yu Gothic", YuGothic, Arial, sans-serif;
+                line-height: 1.8;
+                color: #333;
+                background-color: #f4f4f4;
+                margin: 0;
+                padding: 40px;
+            }
+            
+            /* シートのコンテナ */
+            .page-container {
+                max-width: 900px;
+                margin: 0 auto;
+                background-color: #fff;
+                padding: 60px;
+                box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+                border-radius: 8px;
+            }
+            
+            /* 構成ラベル（セクション見出し）のデザイン */
+            .spec-label {
+                background-color: #004195; /* Panasonic Blue風に調整 */
+                color: #fff;
+                font-size: 0.8rem;
+                font-weight: bold;
+                padding: 6px 14px;
+                display: inline-block;
+                margin-bottom: 24px;
+                border-radius: 4px;
+                letter-spacing: 0.05em;
+            }
+            
+            /* 各セクションの区切り */
+            .section-block {
+                margin-bottom: 70px;
+                padding-bottom: 50px;
+                border-bottom: 1px solid #eaeaea;
+            }
+            .section-block:last-child {
+                border-bottom: none;
+                margin-bottom: 0;
+                padding-bottom: 0;
+            }
+            
+            /* 見出しスタイル */
+            h1 {
+                font-size: 32px;
+                margin-bottom: 16px;
+                line-height: 1.3;
+                color: #111;
+            }
+            h2 {
+                font-size: 26px;
+                margin-top: 0;
+                margin-bottom: 24px;
+                position: relative;
+                padding-bottom: 15px;
+                color: #222;
+            }
+            h2::after {
+                content: '';
+                display: block;
+                width: 60px;
+                height: 4px;
+                background-color: #333;
+                position: absolute;
+                bottom: 0;
+                left: 0;
+            }
+            
+            h3 {
+                font-size: 20px;
+                margin-top: 40px;
+                margin-bottom: 16px;
+                font-weight: bold;
+                color: #444;
+                border-left: 6px solid #ccc;
+                padding-left: 12px;
+            }
+            
+            p {
+                margin-bottom: 1.5em;
+                font-size: 16px;
+            }
+            
+            /* リストスタイル */
+            ul {
+                margin-bottom: 1.5em;
+                padding-left: 1.5em;
+            }
+            li {
+                margin-bottom: 0.8em;
+            }
+            
+            /* 画像エリアの表現 */
+            .img-placeholder {
+                background-color: #f8f9fa;
+                color: #666;
+                border: 2px dashed #cbd5e0;
+                padding: 40px;
+                text-align: center;
+                font-size: 0.95rem;
+                margin: 30px 0;
+                border-radius: 8px;
+            }
+            .img-placeholder::before {
+                content: "📷 IMAGE AREA";
+                display: block;
+                font-weight: bold;
+                color: #999;
+                font-size: 0.8rem;
+                margin-bottom: 8px;
+            }
+            
+            /* 機能紹介のブロック */
+            .feature-box {
+                background: #fdfdfd;
+                border: 1px solid #eee;
+                padding: 25px;
+                border-radius: 6px;
+                margin-bottom: 25px;
+            }
+            .feature-box h3 {
+                margin-top: 0;
+                border-left: none;
+                padding-left: 0;
+                color: #000;
+                border-bottom: 1px solid #ddd;
+                padding-bottom: 10px;
+            }
+            
+            /* テーブル */
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                margin: 30px 0;
+                font-size: 0.95rem;
+                box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            }
+            th, td {
+                border: 1px solid #ddd;
+                padding: 16px;
+                text-align: left;
+            }
+            th {
+                background-color: #f2f2f2;
+                font-weight: bold;
+                width: 25%;
+            }
+            tr:nth-child(even) {
+                background-color: #fafafa;
+            }
+            
+            /* 強調（ハイライト） */
+            .highlight {
+                color: #c00;
+                font-weight: bold;
+            }
+            
+            /* FAQリスト */
+            dl {
+                margin-top: 20px;
+            }
+            dt {
+                font-weight: bold;
+                background: #f4f4f4;
+                padding: 12px 15px;
+                border-radius: 4px;
+                margin-bottom: 8px;
+            }
+            dt::before {
+                content: "Q.";
+                color: #004195;
+                font-weight: 900;
+                margin-right: 8px;
+            }
+            dd {
+                margin: 0 0 25px 0;
+                padding: 0 15px;
+                line-height: 1.8;
+            }
+            dd::before {
+                content: "A.";
+                color: #c00;
+                font-weight: 900;
+                margin-right: 8px;
+            }
+
+            /* CTAボタン */
+            .cta-button {
+                display: inline-block;
+                background-color: #333;
+                color: #fff;
+                padding: 18px 60px;
+                text-decoration: none;
+                font-weight: bold;
+                font-size: 1.1rem;
+                margin-top: 30px;
+                border-radius: 50px;
+                transition: background-color 0.3s;
+            }
+            .cta-button:hover {
+                background-color: #555;
+            }
+        </style>
+    </head>
+    <body>
+        
+        <div class="page-container">
+            
+            <div class="section-block">
+                <span class="spec-label">1. H1タイトル & キャッチコピー</span>
+                <header>
+                    <h1>Panasonic 可変圧力IHジャー炊飯器 SR-N510D</h1>
+                    <p class="highlight" style="font-size: 1.2rem;"><strong>米をおどらせる。うまさ際立つ。</strong></p>
+                    <p>独自の「おどり炊き（急減圧バルブ）」を搭載した、鋳物調デザインモデル。<br>
+                    感動のかまどごはんを目指した炊き技で、甘み豊かなふっくらごはんを食卓へ。</p>
+                </header>
+            </div>
+            
+            <div class="section-block">
+                <span class="spec-label">2. ヒーローエリア（ファーストビュー要素）</span>
+                <section>
+                    <div class="img-placeholder">
+                        <br>
+                        生活感を感じさせないモダンなキッチンに、鋳物調のSR-N510Dが佇んでいる。<br>
+                        フタが開き、艶やかな白米から湯気が立ち上るシズル感のあるショット。
+                    </div>
+                    
+                    <h2>「おかえり」の代わりに、極上のごはんを。</h2>
+                    <p>
+                        独自の圧力技術とこだわりの竈（かまど）釜で、<br>
+                        [cite_start]一粒一粒にしっかり熱を伝え、お米本来の旨みを引き出します。[cite: 17-19]
+                    </p>
+                    
+                    <h3>バリュープロポジション</h3>
+                    <ul>
+                        <li><strong>おどり炊き:</strong> 独自の急減圧バルブ技術で爆発的な沸騰を起こし、お米をおどらせて一粒一粒加熱。</li>
+                        <li><strong>冷凍用コース:</strong> まとめて炊いても、再加熱後においしさを保つ専用プログラム。</li>
+                        <li><strong>鋳物調デザイン:</strong> キッチン空間に調和する上質な佇まいと、シンプルなボタン操作。</li>
+                    </ul>
+                </section>
+            </div>
+            
+            <div class="section-block">
+                <span class="spec-label">3. 問題提起（共感セクション）</span>
+                <section>
+                    <h2>忙しさに追われて、「食事」がおろそかになっていませんか？</h2>
+                    <p>仕事にプライベートに、充実した毎日を送るあなた。<br>
+                    毎日のごはんのおいしさにこだわってみませんか？</p>
+                    
+                    <ul>
+                        <li>「忙しいけれど、炊きたてのようなおいしいご飯が食べたい」</li>
+                        <li>「生活感が出すぎる家電は、キッチンに置きたくない」</li>
+                        <li>「冷凍したご飯はパサパサして味が落ちる気がする」</li>
+                    </ul>
+                    
+                    <p><strong>「忙しいから仕方ない」と諦めていたお米の味。<br>
+                    SR-N510Dなら、忙しい毎日に「感動のかまどごはん」を届けます。</strong></p>
+                </section>
+            </div>
+            
+            <div class="section-block">
+                <span class="spec-label">4. 製品紹介（解決策の提示）</span>
+                <section>
+                    <h2>独自の技術とデザインで、<br>あなたの食卓を変えるSR-N510D。</h2>
+                    
+                    <div class="img-placeholder">
+                        商品カット：鋳物調の質感とフラットな天面を強調
+                    </div>
+                    
+                    <div class="feature-box">
+                        <h3>Feature 1: 【味覚の革命】おどり炊き（急減圧バルブ）</h3>
+                        <ul>
+                            <li><strong>What:</strong> 加圧して沸点を上げ、一気に減圧するパナソニックだけの独自の炊き技。</li>
+                            [cite_start]<li><strong>Benefit:</strong> 爆発的な沸騰でお米をおどらせ、一粒一粒にムラなく熱を伝えます。これにより「粘り」が約4%、「甘み」が約14%アップし、旨み豊かなごはんに炊き上がります。[cite: 72, 88, 94-96]</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="feature-box">
+                        <h3>Feature 2: 【時産の実感】冷凍用コース</h3>
+                        <ul>
+                            <li><strong>What:</strong> 冷凍保存に適した炊き上がりになる専用コース。</li>
+                            [cite_start]<li><strong>Benefit:</strong> 週末にまとめて炊いて冷凍庫へ。レンジで再加熱してもおいしさが保たれるので、忙しい平日の食事も充実します。[cite: 139, 144]</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="feature-box">
+                        <h3>Feature 3: 【空間の調和】鋳物調デザイン</h3>
+                        <ul>
+                            <li><strong>What:</strong> 上質感が漂う鋳物調かつシンプルなデザイン。</li>
+                            [cite_start]<li><strong>Benefit:</strong> 360度どこから見ても美しく、アイランドキッチンや対面キッチンなど、様々な空間によく合います。操作部は直感的に使えるシンプルなボタン式です。[cite: 166, 174, 175]</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="feature-box">
+                        <h3>Feature 4: 【家事の解放】食洗機対応のふた加熱板</h3>
+                        <ul>
+                            <li><strong>What:</strong> 「ワンタッチふた加熱板」は食洗機で洗えます。</li>
+                            [cite_start]<li><strong>Benefit:</strong> 使用後のお手入れがラクラク。内釜も軽くて扱いやすく、そのまま洗米も可能です。[cite: 168-171]</li>
+                        </ul>
+                    </div>
+                </section>
+            </div>
+            
+            <div class="section-block">
+                <span class="spec-label">5. デザイン & テクノロジー</span>
+                <section>
+                    <h3>デザイン：空間に溶け込む「調理道具」としての美学</h3>
+                    <p>SR-N510Dは、家電であることを主張しすぎない、空間に溶け込む鋳物調デザインを採用。フラットなステンレスクリアフレームは拭きやすく、汚れもサッと落とせます。上質な佇まいは、ダイニングテーブルに置いたままでも絵になります。</p>
+                    
+                    <div class="img-placeholder">
+                        画像：おどり炊きの気泡イメージや、釜の断面図
+                    </div>
+                    
+                    <h3>テクノロジー：おどり炊き × ダイヤモンド竈（かまど）釜</h3>
+                    <p>感動の炊き上がりを追求して辿り着いた技術です。</p>
+                    <ul>
+                        [cite_start]<li><strong>独自の「おどり炊き（急減圧バルブ）」:</strong> 加圧・減圧の圧力コントロールで爆発的な沸騰を起こし、お米の芯まで熱を通します。[cite: 94]</li>
+                        [cite_start]<li><strong>ダイヤモンド竈釜:</strong> 発熱性・蓄熱性を兼ね備えた金属多層釜。全面IHの大火力をお米の芯まで伝えます。内面フッ素加工は3年保証付きです。[cite: 107, 108, 223]</li>
+                    </ul>
+                </section>
+            </div>
+            
+            <div class="section-block">
+                <span class="spec-label">6. 使用シーン（Whoの具体化）</span>
+                <section>
+                    <h2>食感自在炊き分けで、メニューに合わせた炊き上がり</h2>
+                    [cite_start]<p>「ふつう・かため・やわらか・もちもち」の4通りの食感に炊き分けが可能。その日の気分やメニューに合わせて楽しめます。[cite: 131-136, 143]</p>
+                    
+                    <div style="background:#f9f9f9; padding:20px; border-radius:4px; margin-bottom:20px;">
+                        <h3 style="margin-top:0; border:none; padding:0;">Scene 01: 平日の夜 - 「冷凍用コース」でストック</h3>
+                        <p>週末に「冷凍用コース」で炊いておいたご飯を解凍。ハリのあるごはんで、手軽に満足感のある夕食を。</p>
+                    </div>
+                    
+                    <div style="background:#f9f9f9; padding:20px; border-radius:4px; margin-bottom:20px;">
+                        <h3 style="margin-top:0; border:none; padding:0;">Scene 02: 週末の朝 - 「もちもち」コースで至福の時</h3>
+                        <p>休日は「もちもち」コースを選択。甘みと粘りのあるごはんは、シンプルなおかずだけでもご馳走になります。</p>
+                    </div>
+                    
+                    <div style="background:#f9f9f9; padding:20px; border-radius:4px;">
+                        <h3 style="margin-top:0; border:none; padding:0;">Scene 03: 少量でもおいしく - 「少量コース」</h3>
+                        [cite_start]<p>0.5合から炊飯可能。少量でも粒が硬くならず、ふっくらハリのあるごはんが炊けます。[cite: 140, 142]</p>
+                    </div>
+                </section>
+            </div>
+            
+            <div class="section-block">
+                <span class="spec-label">7. ベネフィット比較</span>
+                <section>
+                    <h2>なぜ、SR-N510Dを選ぶべきなのか？</h2>
+                    
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>比較項目</th>
+                            <th>一般的なマイコン炊飯器</th>
+                            <th>SR-N510D (可変圧力IH)</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <th>おいしさ</th>
+                            <td>ムラができやすい場合がある</td>
+                            <td><strong>「おどり炊き」で一粒一粒ムラなく加熱。甘み・粘りが向上</strong></td>
+                        </tr>
+                        <tr>
+                            <th>内釜</th>
+                            <td>一般的な釜</td>
+                            <td><strong>「ダイヤモンド竈釜」で大火力を芯まで伝える</strong></td>
+                        </tr>
+                        <tr>
+                            <th>機能</th>
+                            <td>シンプルな炊飯のみ</td>
+                            <td><strong>「食感自在炊き分け」「冷凍用コース」など多彩なメニュー</strong></td>
+                        </tr>
+                        <tr>
+                            <th>手入れ</th>
+                            <td>蒸気口など洗う部品が多い場合がある</td>
+                            <td><strong>ふた加熱板は食洗機対応、フレームはサッと拭ける</strong></td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </section>
+            </div>
+            
+            <div class="section-block">
+                <span class="spec-label">8. FAQ & CTA</span>
+                <section>
+                    <h2>よくあるご質問</h2>
+                    
+                    <dl>
+                        <dt>何合まで炊けますか？</dt>
+                        [cite_start]<dd>0.5合から最大5.5合まで炊飯可能です。少量でもふっくら炊ける「少量コース」も搭載しています。[cite: 196]</dd>
+                        
+                        <dt>お手入れは簡単ですか？</dt>
+                        [cite_start]<dd>はい。「ワンタッチふた加熱板」は取り外しやすく食洗機に対応しています。また、内釜は軽くて扱いやすく、フレームも汚れを拭き取りやすいステンレス素材です。[cite: 168-172]</dd>
+                        
+                        <dt>保温機能はありますか？</dt>
+                        [cite_start]<dd>はい。「うるおい保温」機能を搭載しており、最適な温度コントロールで最大24時間おいしさを保ちます。[cite: 150]</dd>
+                    </dl>
+                    
+                    <div style="text-align: center; margin-top: 60px;">
+                        <h2>毎日食べるものだから、一番いいものを。</h2>
+                        <p>
+                            おいしいご飯がある。<br>
+                            ただそれだけで、一日の終わりは幸せになり、明日の朝が楽しみになる。<br><br>
+                            キッチン空間に調和するデザインと、感動のかまどごはん。<br>
+                            SR-N510Dと共に、豊かな食卓を始めませんか。
+                        </p>
+                        
+                        <a href="#" class="cta-button">詳細スペック・ご購入はこちら</a>
+                    </div>
+                </section>
+            </div>
+            
+        </div>
+        
+    </body>
+</html>
