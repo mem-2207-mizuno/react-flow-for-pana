@@ -6,15 +6,15 @@ import { CATEGORY_STYLES } from '@/constants/colors';
 import type { StepNodeData } from '@/types/flow';
 import './StepNode.css';
 
-type StepNodeProps = NodeProps & { data: StepNodeData };
+type StepNodeProps = NodeProps & { data: StepNodeData & { isEditMode?: boolean } };
 
 export const StepNode = memo(({ data, selected }: StepNodeProps) => {
-  const { step } = data;
+  const { step, isEditMode } = data;
   const styles = CATEGORY_STYLES[step.category];
 
   return (
     <div
-      className={`step-node ${selected ? 'step-node--selected' : ''}`}
+      className={`step-node ${selected ? 'step-node--selected' : ''} ${isEditMode ? 'step-node--editable' : ''}`}
       style={{
         backgroundColor: styles.bg,
         borderColor: styles.border,
@@ -39,6 +39,7 @@ export const StepNode = memo(({ data, selected }: StepNodeProps) => {
               port={port}
               type="target"
               position={Position.Left}
+              isConnectable={isEditMode}
             />
           ))}
         </div>
@@ -50,6 +51,7 @@ export const StepNode = memo(({ data, selected }: StepNodeProps) => {
               port={port}
               type="source"
               position={Position.Right}
+              isConnectable={isEditMode}
             />
           ))}
         </div>
@@ -60,6 +62,11 @@ export const StepNode = memo(({ data, selected }: StepNodeProps) => {
 
       {/* Prompt badge */}
       {step.prompt && <div className="step-node__prompt-badge">Prompt</div>}
+
+      {/* Edit mode indicator */}
+      {isEditMode && (
+        <div className="step-node__edit-indicator" />
+      )}
     </div>
   );
 });

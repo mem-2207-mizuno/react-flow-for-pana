@@ -131,6 +131,26 @@
   -webkit-box-orient: vertical;
 }
 
+/* Edit mode */
+.step-node--editable {
+  cursor: grab;
+}
+
+.step-node--editable:active {
+  cursor: grabbing;
+}
+
+.step-node__edit-indicator {
+  position: absolute;
+  top: -4px;
+  right: -4px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #3b82f6;
+  border: 2px solid #fff;
+}
+
 /* Prompt badge */
 .step-node__prompt-badge {
   display: inline-flex;

@@ -14,6 +14,8 @@ interface DataFlowEdgeData extends Record<string, unknown> {
   siblingCount?: number;
   highlighted?: boolean;
   dimmed?: boolean;
+  isEditMode?: boolean;
+  onDelete?: (id: string) => void;
 }
 
 type Props = EdgeProps & { data?: DataFlowEdgeData };
@@ -34,6 +36,7 @@ export function DataFlowEdge({
   const siblingCount = data?.siblingCount ?? 1;
   const highlighted = data?.highlighted ?? false;
   const dimmed = data?.dimmed ?? false;
+  const isEditMode = data?.isEditMode ?? false;
 
   // Vary curvature for sibling edges so they visually separate
   const curvature =
@@ -69,8 +72,8 @@ export function DataFlowEdge({
           opacity: computedOpacity,
         }}
       />
-      {data?.label && (
-        <EdgeLabelRenderer>
+      <EdgeLabelRenderer>
+        {data?.label && (
           <div
             className={`data-flow-edge__label ${highlighted ? 'data-flow-edge__label--visible' : ''}`}
             style={{
@@ -81,8 +84,23 @@ export function DataFlowEdge({
           >
             {data.label}
           </div>
-        </EdgeLabelRenderer>
-      )}
+        )}
+        {isEditMode && (
+          <button
+            className="data-flow-edge__delete-btn"
+            style={{
+              transform: `translate(-50%, -50%) translate(${labelX}px,${labelY}px)`,
+            }}
+            onClick={(e) => {
+              e.stopPropagation();
+              data?.onDelete?.(id);
+            }}
+            title="Delete connection"
+          >
+            &times;
+          </button>
+        )}
+      </EdgeLabelRenderer>
     </>
   );
 }

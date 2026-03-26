@@ -7,6 +7,7 @@ import {
   type Node,
   type Edge,
   type NodeChange,
+  type Connection,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { StepNode } from './nodes/StepNode';
@@ -24,9 +25,22 @@ interface Props {
   onNodeHover?: (nodeId: string | null) => void;
   onNodesChange?: (changes: NodeChange<Node<StepNodeData>>[]) => void;
   onPaneClick?: () => void;
+  isEditMode?: boolean;
+  onConnect?: (connection: Connection) => void;
+  onEdgeClick?: (edgeId: string) => void;
 }
 
-export function FlowCanvas({ nodes, edges, onNodeClick, onNodeHover, onNodesChange, onPaneClick }: Props) {
+export function FlowCanvas({
+  nodes,
+  edges,
+  onNodeClick,
+  onNodeHover,
+  onNodesChange,
+  onPaneClick,
+  isEditMode = false,
+  onConnect,
+  onEdgeClick,
+}: Props) {
   return (
     <div style={{ width: '100%', height: '100%' }}>
       <ReactFlow
@@ -39,9 +53,15 @@ export function FlowCanvas({ nodes, edges, onNodeClick, onNodeHover, onNodesChan
         onNodeMouseLeave={() => onNodeHover?.(null)}
         onNodesChange={onNodesChange}
         onPaneClick={onPaneClick}
+        onConnect={isEditMode ? onConnect : undefined}
+        onEdgeClick={
+          isEditMode && onEdgeClick
+            ? (_event, edge) => onEdgeClick(edge.id)
+            : undefined
+        }
         nodesDraggable={true}
-        nodesConnectable={false}
-        connectOnClick={false}
+        nodesConnectable={isEditMode}
+        connectOnClick={isEditMode}
         elementsSelectable={true}
         panOnDrag={true}
         zoomOnScroll={true}

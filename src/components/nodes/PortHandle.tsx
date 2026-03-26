@@ -6,9 +6,10 @@ interface Props {
   port: PortDefinition;
   type: 'source' | 'target';
   position: Position;
+  isConnectable?: boolean;
 }
 
-export function PortHandle({ port, type, position }: Props) {
+export function PortHandle({ port, type, position, isConnectable = false }: Props) {
   const color = getPortColor(port.dataType);
 
   return (
@@ -27,7 +28,7 @@ export function PortHandle({ port, type, position }: Props) {
           height: 12,
           border: `2px solid ${color}`,
         }}
-        isConnectable={false}
+        isConnectable={isConnectable}
       />
       <span className="port-row__name">{port.label}</span>
       <span className="port-row__type" style={{ color }}>

@@ -44,3 +44,34 @@
 .data-flow-edge__label--visible {
   opacity: 1;
 }
+
+/* Edge delete button (edit mode) */
+.data-flow-edge__delete-btn {
+  position: absolute;
+  z-index: 11;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  color: #9ca3af;
+  font-size: 14px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: all;
+  opacity: 0;
+  transition: opacity 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.react-flow__edge:hover .data-flow-edge__delete-btn {
+  opacity: 1;
+}
+
+.data-flow-edge__delete-btn:hover {
+  color: #ef4444;
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
